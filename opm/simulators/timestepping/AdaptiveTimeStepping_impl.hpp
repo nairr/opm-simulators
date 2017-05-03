@@ -353,7 +353,7 @@ namespace Opm {
                 substepTimer.provideTimeStepEstimate( newTimeStep );
                 if( solver_verbose_ ) {
                     std::string msg;
-                    msg = "Cutting timestep to "
+                    msg = "Chopping timestep to "
                         + std::to_string(unit::convert::to( newTimeStep, unit::day )) + " days.\n";
                     OpmLog::info(msg);
                 }
