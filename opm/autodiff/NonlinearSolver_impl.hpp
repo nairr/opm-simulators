@@ -162,7 +162,7 @@ namespace Opm
         if (!converged) {
             failureReport_ += report;
 
-            std::string msg = "Failed to complete a time step within " + std::to_string(maxIter()) + " iterations.";
+            std::string msg = "Solver convergence failure - Failed to complete a time step within " + std::to_string(maxIter()) + " iterations.";
             if (model_->terminalOutputEnabled()) {
                 OpmLog::problem(msg);
             }
