@@ -353,9 +353,9 @@ namespace Opm {
                 substepTimer.provideTimeStepEstimate( newTimeStep );
                 if( solver_verbose_ ) {
                     std::string msg;
-                    msg = "Chopping timestep to "
+                    msg = "Timestep chopped to "
                         + std::to_string(unit::convert::to( newTimeStep, unit::day )) + " days.\n";
-                    OpmLog::info(msg);
+                    OpmLog::probleminfo(msg);
                 }
                 // reset states
                 state      = last_state;
