@@ -1,8 +1,8 @@
 /*
-  Copyright 2016 SINTEF ICT, Applied Mathematics.
-  Copyright 2016 - 2017 Statoil ASA.
-  Copyright 2017 Dr. Blatt - HPC-Simulation-Software & Services
-  Copyright 2016 - 2017 IRIS AS
+  File adapted from BlackoilWellModel.hpp
+
+  Copyright 2017 TNO - Heat Transfer & Fluid Dynamics, Modelling & Optimization of the Subsurface
+  Copyright 2017 Statoil ASA.
 
   This file is part of the Open Porous Media project (OPM).
 
@@ -35,13 +35,23 @@
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
 
 #include <opm/core/simulator/SimulatorReport.hpp>
+
+#include <opm/simulators/timestepping/SimulatorTimer.hpp>
+
 #include <opm/autodiff/BlackoilPropsAdFromDeck.hpp>
 #include <opm/autodiff/BlackoilDetails.hpp>
 #include <opm/autodiff/BlackoilModelParameters.hpp>
 #include <opm/autodiff/RateConverter.hpp>
-#include<dune/common/fmatrix.hh>
-#include<dune/istl/bcrsmatrix.hh>
-#include<dune/istl/matrixmatrix.hh>
+#include <opm/autodiff/AQUCT_params.hpp>
+#include <opm/autodiff/AquiferCarterTracy.hpp>
+
+#include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+
+#include <dune/common/fmatrix.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/matrixmatrix.hh>
 
 #include <opm/material/densead/Math.hpp>
 
@@ -51,7 +61,9 @@ namespace Opm {
         /// Class for handling the blackoil well model.
         template<typename TypeTag>
         class BlackoilAquiferModel {
+        
         public:
+
             // ---------      Types      ---------
             typedef BlackoilModelParameters ModelParameters;
 
@@ -68,6 +80,7 @@ namespace Opm {
 
             typedef Ewoms::BlackOilPolymerModule<TypeTag> PolymerModule;
 
+            typedef AquiferCarterTracy<TypeTag> Aquifer_object;
 
             BlackoilAquiferModel(Simulator& ebosSimulator,
                               const ModelParameters& param,
@@ -75,8 +88,8 @@ namespace Opm {
 
             // compute the well fluxes and assemble them in to the reservoir equations as source terms
             // and in the well equations.
-            void assemble(const int iterationIdx,
-                                     const double dt);
+            void assemble( const SimulatorTimerInterface& timer,
+                           const int iterationIdx                );
 
             // called at the beginning of a time step
             void beginTimeStep();
@@ -90,6 +103,14 @@ namespace Opm {
             void endReportStep();
 
             const SimulatorReport& lastReport() const;
+
+            inline const Simulator& simulator() const
+            {
+                return ebosSimulator_;
+            }
+
+            /// Hack function to get what I need from parser
+            std::vector<Aquifer_object> hack_init(const Simulator& ebosSimulator);//, std::vector<Aquifer_object>& aquifers);
 
         protected:
 
@@ -108,6 +129,7 @@ namespace Opm {
             double gravity_;
             std::vector<double> depth_;
             bool aquifers_active_;
+            std::vector<Aquifer_object> aquifers_;
 
 
             SimulatorReport last_report_;
@@ -119,6 +141,10 @@ namespace Opm {
 
             void initPrimaryVariablesEvaluation() const;
 
+            void updateConnectionIntensiveQuantities() const;
+
+            void calculateExplicitQuantities() const;
+
             // The number of components in the model.
             int numComponents() const;
 
@@ -128,11 +154,15 @@ namespace Opm {
 
             int flowPhaseToEbosPhaseIdx( const int phaseIdx ) const;
 
-            void assembleAquiferEq(const double dt);
+            void assembleAquiferEq(const SimulatorTimerInterface& timer);
+
+            SimulatorReport solveAquiferEq(const SimulatorTimerInterface& timer);
 
             // some preparation work, mostly related to group control and RESV,
             // at the beginning of each time step (Not report step)
             void prepareTimeStep();
+
+            const std::vector<Aquifer_object>& aquifers();
 
             /// return true if wells are available in the reservoir
             bool aquifersActive() const;
