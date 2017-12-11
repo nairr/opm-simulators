@@ -138,6 +138,7 @@ namespace Opm {
         BlackoilModelEbos(Simulator& ebosSimulator,
                           const ModelParameters& param,
                           BlackoilWellModel<TypeTag>& well_model,
+                          BlackoilAquiferModel<TypeTag>& aquifer_model,
                           const NewtonIterationBlackoilInterface& linsolver,
                           const bool terminal_output
                           )
@@ -152,6 +153,7 @@ namespace Opm {
         , has_polymer_(GET_PROP_VALUE(TypeTag, EnablePolymer))
         , param_( param )
         , well_model_ (well_model)
+        , aquifer_model_(aquifer_model)
         , terminal_output_ (terminal_output)
         , current_relaxation_(1.0)
         , dx_old_(AutoDiffGrid::numCells(grid_))
@@ -204,6 +206,7 @@ namespace Opm {
             wasSwitched_.resize(numDof);
             std::fill(wasSwitched_.begin(), wasSwitched_.end(), false);
 
+            aquiferModel().beginTimeStep();
             wellModel().beginTimeStep();
 
             if (param_.update_equations_scaling_) {
@@ -349,6 +352,7 @@ namespace Opm {
             DUNE_UNUSED_PARAMETER(well_state);
 
             wellModel().timeStepSucceeded();
+            aquiferModel().timeStepSucceeded();
             ebosSimulator_.problem().endTimeStep();
 
         }
@@ -366,8 +370,21 @@ namespace Opm {
             ebosSimulator_.model().linearizer().linearize();
             ebosSimulator_.problem().endIteration();
 
-            // -------- Well equations ----------
+            // -------- Well and aquifer common variables ----------
             double dt = timer.currentStepLength();
+
+            // -------- Aquifer models ----------
+            try
+            {
+                // Modify the Jacobian and residuals according to the aquifer models
+                aquiferModel().assemble(timer, iterationIdx);
+            }
+            catch( const Dune::FMatrixError& e )
+            {
+                OPM_THROW(Opm::NumericalProblem,"Error when assembling aquifer models");
+            }
+
+            // -------- Well equations ----------
 
             try
             {
@@ -1477,6 +1494,9 @@ namespace Opm {
         // Well Model
         BlackoilWellModel<TypeTag>& well_model_;
 
+        // Aquifer Model
+        BlackoilAquiferModel<TypeTag>& aquifer_model_;
+
         /// \brief Whether we print something to std::cout
         bool terminal_output_;
         /// \brief The number of cells of the global grid.
@@ -1494,6 +1514,12 @@ namespace Opm {
 
         const BlackoilWellModel<TypeTag>&
         wellModel() const { return well_model_; }
+
+        BlackoilAquiferModel<TypeTag>&
+        aquiferModel() { return aquifer_model_; }
+
+        const BlackoilAquiferModel<TypeTag>&
+        aquiferModel() const { return aquifer_model_; }
 
         int flowPhaseToEbosCompIdx( const int phaseIdx ) const
         {
