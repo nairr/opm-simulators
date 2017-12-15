@@ -28,7 +28,7 @@ namespace Opm {
         number_of_cells_ = gridView.size(/*codim=*/0);
         global_nc_ = gridView.comm().sum(number_of_cells_);
         gravity_ = ebosSimulator_.problem().gravity()[2];
-        aquifers_ = hack_init(ebosSimulator_);
+        init(ebosSimulator_, aquifers_);
     }
 
 
@@ -46,7 +46,10 @@ namespace Opm {
     void
     BlackoilAquiferModel<TypeTag>:: timeStepSucceeded()
     {
-        // Right now it doesn't do shit.
+        for (auto aquifer = aquifers_.begin(); aquifer != aquifers_.end(); ++aquifer)
+        {
+            aquifer->after_time_step();
+        }
     }
 
     // called at the beginning of a report step
@@ -66,7 +69,7 @@ namespace Opm {
         // We are using the simple integer indexing for the aquifers
         for (int i = 0; i < numAquifers(); ++i)
         {
-            std::cout << "Aquifer[" << i << "] -> id " << aquifers()[i].cell_id()
+            std::cout << "Aquifer[" << i << "]"
                       << " : Tc = " << aquifers()[i].time_constant()
                       << ", beta = " << aquifers()[i].aquifer_influx_constant() << std::endl;
         }
@@ -90,11 +93,6 @@ namespace Opm {
               const int iterationIdx                )
     {
         last_report_ = SimulatorReport();
-
-        if ( ! aquifersActive() ) {
-            return;
-        }
-
         
         // We need to update the reservoir pressures connected to the aquifer
         updateConnectionIntensiveQuantities();
@@ -102,7 +100,7 @@ namespace Opm {
         if (iterationIdx == 0) {
             // We can do the Table check and coefficients update in this function
             // For now, it does nothing!
-            prepareTimeStep();
+            prepareTimeStep(timer);
         }
 
         if (iterationIdx == 0) {
@@ -153,18 +151,13 @@ namespace Opm {
 
     template<typename TypeTag>
     void
-    BlackoilAquiferModel<TypeTag>:: calculateExplicitQuantities() const
+    BlackoilAquiferModel<TypeTag>:: calculateExplicitQuantities()
     {
-        // For now we can only do one aquifer, so we don't loop over all...
-        // for (int aqid; aqid < numAquifers(); aqid++)
+        // for (auto aqui = aquifers_.begin(); aqui!= aquifers_.end(); ++aqui)
         // {
-        //     (aquifers.at(aqid))->calculateExplicitQuantities(ebosSimulator_);
+        //     std::cout << "calculateExplicitQuantities: Aquifer id = " << aqui->aquiferID() << std::endl;
+        //     aqui->calculateExplicitQuantities(ebosSimulator_);
         // }
-
-        /*
-         for (auto& aquifer : aquifer_container_) {
-             aquifer->calculateExplicitQuantities(ebosSimulator_);
-         }*/
     }
 
 
@@ -208,8 +201,8 @@ namespace Opm {
     BlackoilAquiferModel<TypeTag>:: numPhases() const
     {
         // Not implemented yet!!!!!!!!!!!!
-        return -1;
-        // return aquifers()->number_of_phases;
+        const auto& pu = phase_usage_;
+        return pu.num_phases;
     }
 
 
@@ -236,16 +229,24 @@ namespace Opm {
     void
     BlackoilAquiferModel<TypeTag>:: assembleAquiferEq(const SimulatorTimerInterface& timer)
     {
-        // Still doesn't do shit
+        for (auto aquifer = aquifers_.begin(); aquifer != aquifers_.end(); ++aquifer)
+        {
+            std::cout << "assembleAquiferEq: Aquifer id = " << aquifer->aquiferID() << std::endl;
+            aquifer->assembleAquiferEq(ebosSimulator_, timer);
+        }
     }
 
     // Protected function
     // some preparation work, mostly related to group control and RESV,
     // at the beginning of each time step (Not report step)
     template<typename TypeTag>
-    void BlackoilAquiferModel<TypeTag>:: prepareTimeStep()
+    void BlackoilAquiferModel<TypeTag>:: prepareTimeStep(const SimulatorTimerInterface& timer)
     {
-        // Not implemented yet!
+        // Here we can ask each carter tracy aquifers to get the current previous time step's pressure
+        for (auto aquifer = aquifers_.begin(); aquifer != aquifers_.end(); ++aquifer)
+        {
+            aquifer->before_time_step(ebosSimulator_, timer);
+        }
     }
 
     // Protected function: Returns a reference to the aquifers members in the model
@@ -256,96 +257,24 @@ namespace Opm {
         return aquifers_;
     }
 
-    // Protected function
-    /// return true if aquifers are available in the reservoir
-    template<typename TypeTag>
-    bool
-    BlackoilAquiferModel<TypeTag>:: aquifersActive() const
-    {
-        return aquifers_active_;
-    }
 
-    // Protected function
+    // Initialize the aquifers in the deck
     template<typename TypeTag>
     void
-    BlackoilAquiferModel<TypeTag>:: setAquifersActive(const bool aquifers_active)
+    BlackoilAquiferModel<TypeTag>:: init(const Simulator& ebosSimulator, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)//, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)
     {
-        aquifers_active_ = aquifers_active;
-    }
-
-    // Protected function
-    /// return true if Aquifers are available on this process
-    template<typename TypeTag>
-    bool
-    BlackoilAquiferModel<TypeTag>:: localAquifersActive() const
-    {
-        return numAquifers() > 0;
-    }
-
-    // Begin the hack to initialize the aquifers in the deck
-    template<typename TypeTag>
-    std::vector< AquiferCarterTracy<TypeTag> >
-    BlackoilAquiferModel<TypeTag>:: hack_init(const Simulator& ebosSimulator)//, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)
-    {
-        std::vector< AquiferCarterTracy<TypeTag> > aquifers;
-        /** Begin hack!!!!! */
         const auto& deck = ebosSimulator.gridManager().deck();
         const auto& eclState = ebosSimulator.gridManager().eclState();
         
-        if (!deck.hasKeyword("AQUCT")){
-            std::cout << "Nothing is shown! Where is AQUCT!????" << std::endl;
-        }
+        // Get all the carter tracy aquifer properties data and put it in aquifers vector
+        AquiferCT aquiferct = AquiferCT(eclState,deck);
 
-        const auto& aquctKeyword = deck.getKeyword("AQUCT");
-        std::vector<AQUCT_params> aquctParams;
-        // Resize the parameter vector container based on row entries in aquct
-        // We do the same for aquifers too because number of aquifers is assumed to be for each entry in aquct
-        aquctParams.resize(aquctKeyword.size());
-        // aquifers.resize(aquctKeyword.size());
+        std::vector<AquiferCT::AQUCT_data> aquifersData = aquiferct.getAquifers();
 
-        const int tableID = 0;
-
-        std::cout << "Parsing AQUCT stuff" << std::endl;
-        for (size_t aquctRecordIdx = 0; aquctRecordIdx < aquctKeyword.size(); ++ aquctRecordIdx) 
+        for (auto aquiferData = aquifersData.begin(); aquiferData != aquifersData.end(); ++aquiferData)
         {
-            const auto& aquctRecord = aquctKeyword.getRecord(aquctRecordIdx);
-
-            aquctParams.at(aquctRecordIdx).aquiferID = aquctRecord.getItem("AQUIFER_ID").template get<int>(0);
-            aquctParams.at(aquctRecordIdx).h = aquctRecord.getItem("THICKNESS_AQ").template get<double>(0);
-            aquctParams.at(aquctRecordIdx).phi_aq = aquctRecord.getItem("PORO_AQ").template get<double>(0);
-            aquctParams.at(aquctRecordIdx).d0 = aquctRecord.getItem("DAT_DEPTH").getSIDouble(0);
-            aquctParams.at(aquctRecordIdx).C_t = aquctRecord.getItem("C_T").template get<double>(0);
-            aquctParams.at(aquctRecordIdx).r_o = aquctRecord.getItem("RAD").getSIDouble(0);
-            aquctParams.at(aquctRecordIdx).k_a = aquctRecord.getItem("PERM_AQ").getSIDouble(0);
-            aquctParams.at(aquctRecordIdx).theta = aquctRecord.getItem("INFLUENCE_ANGLE").template get<double>(0);
-            aquctParams.at(aquctRecordIdx).c1 = 0.008527; // We are using SI
-            aquctParams.at(aquctRecordIdx).c2 = 6.283;
-            aquctParams.at(aquctRecordIdx).inftableID = aquctRecord.getItem("TABLE_NUM_INFLUENCE_FN").template get<int>(0) - 1;
-            aquctParams.at(aquctRecordIdx).pvttableID = aquctRecord.getItem("TABLE_NUM_WATER_PRESS").template get<int>(0) - 1;
-
-            std::cout << aquctParams.at(aquctRecordIdx).inftableID << std::endl;
-            // Get the correct influence table values
-            const auto& aqutabTable = eclState.getTableManager().getAqutabTables().getTable(aquctParams.at(aquctRecordIdx).inftableID);
-            const auto& aqutab_tdColumn = aqutabTable.getColumn(0);
-            const auto& aqutab_piColumn = aqutabTable.getColumn(1);
-            aquctParams.at(aquctRecordIdx).td = aqutab_tdColumn.vectorCopy();
-            aquctParams.at(aquctRecordIdx).pi = aqutab_piColumn.vectorCopy();
-
-            // We determine the cell perforation here.
-            int cellID = 10 + aquctRecordIdx;
-
-            aquctParams.at(aquctRecordIdx).cell_id = cellID;
-
-            // We do not have mu_w as it has to be calculated from pvttable
-            aquifers.push_back(Aquifer_object( aquctParams.at(aquctRecordIdx) ));
+            aquifers.push_back( AquiferCarterTracy<TypeTag> (*aquiferData, numComponents(), gravity_ ) );
         }
-
-        // I want to deliberately add another aquifer
-        aquifers.push_back( Aquifer_object(99) );
-
-        // aquifers_ = aquifers;
-
-        return aquifers;
     }
 
 } // namespace Opm

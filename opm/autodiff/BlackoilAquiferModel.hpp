@@ -34,6 +34,8 @@
 
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
 
+#include <opm/parser/eclipse/EclipseState/AquiferCT.hpp>
+
 #include <opm/core/simulator/SimulatorReport.hpp>
 
 #include <opm/simulators/timestepping/SimulatorTimer.hpp>
@@ -42,7 +44,6 @@
 #include <opm/autodiff/BlackoilDetails.hpp>
 #include <opm/autodiff/BlackoilModelParameters.hpp>
 #include <opm/autodiff/RateConverter.hpp>
-#include <opm/autodiff/AQUCT_params.hpp>
 #include <opm/autodiff/AquiferCarterTracy.hpp>
 
 #include <opm/parser/eclipse/Deck/Deck.hpp>
@@ -69,6 +70,7 @@ namespace Opm {
 
 
             typedef typename GET_PROP_TYPE(TypeTag, Grid)                Grid;
+            typedef typename GET_PROP_TYPE(TypeTag, GridView)            GridView;
             typedef typename GET_PROP_TYPE(TypeTag, FluidSystem)         FluidSystem;
             typedef typename GET_PROP_TYPE(TypeTag, ElementContext)      ElementContext;
             typedef typename GET_PROP_TYPE(TypeTag, Indices)             BlackoilIndices;
@@ -110,7 +112,7 @@ namespace Opm {
             }
 
             /// Hack function to get what I need from parser
-            std::vector<Aquifer_object> hack_init(const Simulator& ebosSimulator);//, std::vector<Aquifer_object>& aquifers);
+            void init(const Simulator& ebosSimulator, std::vector<Aquifer_object>& aquifers);
 
         protected:
 
@@ -128,7 +130,6 @@ namespace Opm {
             size_t number_of_cells_;
             double gravity_;
             std::vector<double> depth_;
-            bool aquifers_active_;
             std::vector<Aquifer_object> aquifers_;
 
 
@@ -143,7 +144,7 @@ namespace Opm {
 
             void updateConnectionIntensiveQuantities() const;
 
-            void calculateExplicitQuantities() const;
+            void calculateExplicitQuantities();
 
             // The number of components in the model.
             int numComponents() const;
@@ -160,17 +161,9 @@ namespace Opm {
 
             // some preparation work, mostly related to group control and RESV,
             // at the beginning of each time step (Not report step)
-            void prepareTimeStep();
+            void prepareTimeStep(const SimulatorTimerInterface& timer);
 
             const std::vector<Aquifer_object>& aquifers();
-
-            /// return true if wells are available in the reservoir
-            bool aquifersActive() const;
-
-            void setAquifersActive(const bool aquifers_active);
-
-            /// return true if wells are available on this process
-            bool localAquifersActive() const;
 
         };
 
