@@ -40,6 +40,7 @@
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
 
 #include <opm/parser/eclipse/EclipseState/AquiferCT.hpp>
+#include <opm/parser/eclipse/EclipseState/Aquancon.hpp>
 
 #include <opm/core/simulator/SimulatorReport.hpp>
 
