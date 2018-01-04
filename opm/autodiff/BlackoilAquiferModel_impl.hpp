@@ -93,27 +93,30 @@ namespace Opm {
               const int iterationIdx                )
     {
         last_report_ = SimulatorReport();
-        
+        std::cout << "Debug 1" << std::endl;
         // We need to update the reservoir pressures connected to the aquifer
         updateConnectionIntensiveQuantities();
-
+        std::cout << "Debug 2" << std::endl;
         if (iterationIdx == 0) {
             // We can do the Table check and coefficients update in this function
             // For now, it does nothing!
+            std::cout << "Debug 3" << std::endl;
             prepareTimeStep(timer);
         }
 
         if (iterationIdx == 0) {
+            std::cout << "Debug 4" << std::endl;
             calculateExplicitQuantities();
         }
 
         if (param_.solve_aquifereq_initially_ && iterationIdx == 0) {
             // solve the aquifer equations as a pre-processing step
+            std::cout << "Debug 5" << std::endl;
             last_report_ = solveAquiferEq(timer);
         }
-
+        std::cout << "Debug 6" << std::endl;
         assembleAquiferEq(timer);
-
+        std::cout << "Debug 7" << std::endl;
         last_report_.converged = true;
     }
 
@@ -268,6 +271,7 @@ namespace Opm {
         
         // Get all the carter tracy aquifer properties data and put it in aquifers vector
         AquiferCT aquiferct = AquiferCT(eclState,deck);
+        Aquancon aquifer_connect = Aquancon(eclState.getInputGrid(), deck);
 
         std::vector<AquiferCT::AQUCT_data> aquifersData = aquiferct.getAquifers();
         std::vector<AquiferCT::AQUANCON_data> aquanconData = aquiferct.getAquancon();
@@ -277,31 +281,12 @@ namespace Opm {
             
         // }
 
-        auto ita = aquifersData.cbegin();
-        auto f_lambda = [&] (AquiferCT::AQUANCON_data i) {
-            aquifers.push_back( AquiferCarterTracy<TypeTag> (*ita++, i, numComponents(), gravity_ ) );
-        };
-        std::for_each( aquanconData.cbegin(), aquanconData.cend(), f_lambda );
-    }
 
-    // Begin the hack to initialize the aquifers in the deck
-    template<typename TypeTag>
-    std::vector< AquiferCarterTracy<TypeTag> >
-    BlackoilAquiferModel<TypeTag>:: hack_init(const Simulator& ebosSimulator)//, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)
-    {
-        std::vector< AquiferCarterTracy<TypeTag> > aquifers;
-        /** Begin hack!!!!! */
-        const auto& deck = ebosSimulator.gridManager().deck();
-        const auto& eclState = ebosSimulator.gridManager().eclState();
-        
-        // Get all the carter tracy aquifer properties data and put it in aquifers vector
-        AquiferCT aquiferct = AquiferCT(eclState,deck);
-
-        std::vector<AquiferCT::AQUCT_data> aquifersData = aquiferct.getAquifers();
-
-        for (auto aquiferData = aquifersData.begin(); aquiferData != aquifersData.end(); ++aquiferData)
+        for (int i = 0; i < aquifersData.size(); ++i)
         {
-            aquifers.push_back( AquiferCarterTracy<TypeTag> (*aquiferData, numComponents(), gravity_ ) );
+            aquifers.push_back( 
+                                 AquiferCarterTracy<TypeTag> (aquifersData.at(i), aquifer_connection.at(i), numComponents(), gravity_, ebosSimulator_) 
+                              );
         }
     }
 
