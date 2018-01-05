@@ -270,11 +270,19 @@ namespace Opm {
         AquiferCT aquiferct = AquiferCT(eclState,deck);
 
         std::vector<AquiferCT::AQUCT_data> aquifersData = aquiferct.getAquifers();
+        std::vector<AquiferCT::AQUANCON_data> aquanconData = aquiferct.getAquancon();
 
-        for (auto aquiferData = aquifersData.begin(); aquiferData != aquifersData.end(); ++aquiferData)
-        {
-            aquifers.push_back( AquiferCarterTracy<TypeTag> (*aquiferData, numComponents(), gravity_ ) );
-        }
+        // for (auto aquiferData = aquifersData.begin(); aquiferData != aquifersData.end(); ++aquiferData)
+        // {
+            
+        // }
+
+        auto ita = aquifersData.cbegin();
+        auto f_lambda = [&] (AquiferCT::AQUANCON_data i) {
+            aquifers.push_back( AquiferCarterTracy<TypeTag> (*ita++, i, numComponents(), gravity_ ) );
+        };
+        std::for_each( aquanconData.cbegin(), aquanconData.cend(), f_lambda );
+
     }
 
 } // namespace Opm

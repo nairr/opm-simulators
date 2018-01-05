@@ -95,7 +95,8 @@ namespace Opm
                 init_quantities();
             }
 
-            explicit AquiferCarterTracy(const AquiferCT::AQUCT_data& params, const int numComponents, const Scalar gravity)
+            explicit AquiferCarterTracy( const AquiferCT::AQUCT_data& params, const AquiferCT::AQUANCON_data& aquanconParams, 
+                                         const int numComponents, const Scalar gravity                                        )
             : phi_aq_ (params.phi_aq), //
               C_t_ (params.C_t), //
               r_o_ (params.r_o), //
@@ -115,7 +116,7 @@ namespace Opm
               gravity_ (gravity)
             {
                 mu_w_ = 1e-3;
-                init_quantities();
+                init_quantities(aquanconParams);
             }
 
             inline const PhaseUsage&
@@ -336,7 +337,7 @@ namespace Opm
                     coeff[i] = result[i];
             }
 
-            inline void init_quantities()
+            inline void init_quantities(const AquiferCT::AQUANCON_data& aquanconParams)
             {
                 W_flux_ = 0.;
                 // pa0_ is the initial aquifer water pressure. Must be calculated from equilibrium if left default,
