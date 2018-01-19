@@ -23,6 +23,7 @@
 
 #include <Eigen/QR>
 #include <opm/parser/eclipse/EclipseState/AquiferCT.hpp>
+#include <opm/parser/eclipse/EclipseState/Aquancon.hpp>
 #include <opm/autodiff/BlackoilAquiferModel.hpp>
 #include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/core/props/BlackoilPhases.hpp>
@@ -95,7 +96,8 @@ namespace Opm
                 init_quantities();
             }
 
-            explicit AquiferCarterTracy(const AquiferCT::AQUCT_data& params, const int numComponents, const Scalar gravity)
+            explicit AquiferCarterTracy( const AquiferCT::AQUCT_data& params, const Aquancon::AquanconOutput& connection,
+                                         const int numComponents, const Scalar gravity                                    )
             : phi_aq_ (params.phi_aq), //
               C_t_ (params.C_t), //
               r_o_ (params.r_o), //
@@ -110,12 +112,12 @@ namespace Opm
               aquiferID_ (params.aquiferID),
               inftableID_ (params.inftableID),
               pvttableID_ (params.pvttableID),
-              cell_idx_ (params.cell_id),
               num_components_ (numComponents),
               gravity_ (gravity)
             {
                 mu_w_ = 1e-3;
-                init_quantities();
+                cell_idx_ = connection.global_index;
+                init_quantities(connection);
             }
 
             inline const PhaseUsage&
@@ -278,7 +280,7 @@ namespace Opm
             int num_components_;
 
             // Grid variables
-            std::vector<int> cell_idx_;
+            std::vector<size_t> cell_idx_;
 
             // Quantities at each grid id
             std::vector<Scalar> cell_depth_;
@@ -336,7 +338,7 @@ namespace Opm
                     coeff[i] = result[i];
             }
 
-            inline void init_quantities()
+            inline void init_quantities(const Aquancon::AquanconOutput& connection)
             {
                 W_flux_ = 0.;
                 // pa0_ is the initial aquifer water pressure. Must be calculated from equilibrium if left default,
