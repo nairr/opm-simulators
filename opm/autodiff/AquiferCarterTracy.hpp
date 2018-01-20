@@ -472,7 +472,7 @@ namespace Opm
                 }
             }
 
-
+            // This function is for calculating the aquifer properties from equilibrium state with the reservoir
             inline void calculate_reservoir_equilibrium()
             {
                 pa0_ = 100e6;
