@@ -93,27 +93,30 @@ namespace Opm {
               const int iterationIdx                )
     {
         last_report_ = SimulatorReport();
-        
+        std::cout << "Debug 1" << std::endl;
         // We need to update the reservoir pressures connected to the aquifer
         updateConnectionIntensiveQuantities();
-
+        std::cout << "Debug 2" << std::endl;
         if (iterationIdx == 0) {
             // We can do the Table check and coefficients update in this function
             // For now, it does nothing!
+            std::cout << "Debug 3" << std::endl;
             prepareTimeStep(timer);
         }
 
         if (iterationIdx == 0) {
+            std::cout << "Debug 4" << std::endl;
             calculateExplicitQuantities();
         }
 
         if (param_.solve_aquifereq_initially_ && iterationIdx == 0) {
             // solve the aquifer equations as a pre-processing step
+            std::cout << "Debug 5" << std::endl;
             last_report_ = solveAquiferEq(timer);
         }
-
+        std::cout << "Debug 6" << std::endl;
         assembleAquiferEq(timer);
-
+        std::cout << "Debug 7" << std::endl;
         last_report_.converged = true;
     }
 
@@ -279,12 +282,11 @@ namespace Opm {
         // }
         assert( aquifersData.size() == aquifer_connect.size() );
 
-        std::cout << gravity_ << std::endl;
 
         for (int i = 0; i < aquifersData.size(); ++i)
         {
             aquifers.push_back( 
-                                 AquiferCarterTracy<TypeTag> (aquifersData.at(i), aquifer_connection.at(i), numComponents(), gravity_ ) 
+                                 AquiferCarterTracy<TypeTag> (aquifersData.at(i), aquifer_connection.at(i), numComponents(), gravity_, ebosSimulator_) 
                               );
         }
     }
