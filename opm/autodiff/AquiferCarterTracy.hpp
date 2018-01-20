@@ -248,7 +248,7 @@ namespace Opm
             // Ideally it should be a map which given a cell_id, it returns the area fraction
             inline const double area_fraction(const int i)
             {
-                return 1000.0*20.0*0.092903/(1000.0*1000.0*0.092903*2 + 1000.0*20.0*0.092903*4);
+                return alphai_.at(i);//1000.0*20.0*0.092903/(1000.0*1000.0*0.092903*2 + 1000.0*20.0*0.092903*4);
             }
 
             inline void print_private_members() const
