@@ -35,6 +35,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include <map>
 #include <cassert>
 
@@ -475,8 +476,24 @@ namespace Opm
             // This function is for calculating the aquifer properties from equilibrium state with the reservoir
             inline void calculate_reservoir_equilibrium()
             {
-                pa0_ = 100e6;
-                mu_w_ = 1e-3;
+                // Since the global_indices are the reservoir index, we just need to extract the fluidstate at those indices
+                std::vector<Scalar> water_pressure_reservoir, rho_water_reservoir, pw_aquifer, mu_aquifer;
+                
+                auto cellID = cell_idx_.begin();
+                for (int idx = 0; cellID != cell_idx_.end(); ++cellID, ++idx )
+                {
+                    const auto& intQuants = *(ebos_simulator_.model().cachedIntensiveQuantities(*cellID, /*timeIdx=*/ 0));
+                    const auto& fs = intQuants.fluidState();
+                    auto fs_aquifer = fs;
+                    fs_aquifer.setPvtRegionIndex(pvttableID_);
+                    water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx).value() );
+                    rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx).value() );
+                    pw_aquifer.push_back( water_pressure_reservoir.at(idx) - rho_water_reservoir.at(idx)*gravity_*(cell_depth_.at(idx) - d0_) );
+                    mu_aquifer.push_back( fs_aquifer.viscosity(FluidSystem::waterPhaseIdx).value() );
+                }
+
+                pa0_ = std::accumulate(pw_aquifer.begin(), pw_aquifer.end(), 0.)/pw_aquifer.size();
+                mu_w_ = std::accumulate(mu_aquifer.begin(), mu_aquifer.end(), 0.)/mu_aquifer.size();
             }
             
 
