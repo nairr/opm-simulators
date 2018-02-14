@@ -202,7 +202,11 @@ namespace Opm
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) 
                     {
                         // also need to consider the efficiency factor when manipulating the jacobians.
-                        ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx] -= qinflow.derivative(pvIdx);
+		      std::cout<<" inflow derivative = "<<qinflow.derivative(pvIdx)<<std::endl;
+		      std::cout<<" Jac before update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx]<<std::endl;
+		      
+                        ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx] += qinflow.derivative(pvIdx);
+			std::cout<<" Jac after update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx]<<std::endl;
                     }
                     std::cout << "Debug 9c" << std::endl;
                     std::cout << "In CarterTracy<assembleAquiferEq>: I am aquifer #" << aquiferID_
@@ -294,10 +298,10 @@ namespace Opm
 
             // Quantities at each grid id
             std::vector<Scalar> cell_depth_;
-            std::vector<Scalar> pressure_previous_;
-            std::vector<Scalar> pressure_current_;
-            std::vector<Scalar> Qai_;
-            std::vector<Scalar> rhow_;
+            std::vector<Eval> pressure_previous_;
+            std::vector<Eval> pressure_current_;
+            std::vector<Eval> Qai_;
+            std::vector<Eval> rhow_;
             std::vector<Scalar> alphai_;
 
             // Variables constants
@@ -316,8 +320,8 @@ namespace Opm
             std::vector<Scalar> aqutab_td_, aqutab_pi_;
 
             // Cumulative flux
-            Scalar W_flux_, dt_, pa0_, gravity_;
-
+            Scalar dt_, pa0_, gravity_;
+	    Eval W_flux_;
             // Also return the polynomial fit
             std::vector<Scalar> coeff_;
             
@@ -359,32 +363,33 @@ namespace Opm
 
                 // pa0_ is the initial aquifer water pressure. Must be calculated from equilibrium if left default,
                 // or we get the information from the deck Hacked to make it at 45e6 Pa
-                calculate_reservoir_equilibrium();
-                
+                //calculate_reservoir_equilibrium();
+                pa0_ = 1e8;
+                mu_w_ = 0.5;
                 pressure_previous_.resize(cell_idx_.size(), 0.);
                 pressure_current_.resize(cell_idx_.size(), 0.);
 
-                rhow_.resize(cell_idx_.size(), 998.0); 
-                Qai_.resize(cell_idx_.size(), 0.);
+                rhow_.resize(cell_idx_.size(), 1000.0); 
+                Qai_.resize(cell_idx_.size(), 0.0);
 
-                polynomial_fit(aqutab_td_, aqutab_pi_, coeff_, 2, true);
+                polynomial_fit(aqutab_td_, aqutab_pi_, coeff_, 1, true);
             }
 
-            inline void get_current_Pressure_cell(std::vector<Scalar>& pressure_water, const int idx, const IntensiveQuantities& intQuants)
+            inline void get_current_Pressure_cell(std::vector<Eval>& pressure_water, const int idx, const IntensiveQuantities& intQuants)
             {
                 const auto& fs = intQuants.fluidState();
-                pressure_water[idx] = fs.pressure(FluidSystem::waterPhaseIdx).value();
+                pressure_water[idx] = fs.pressure(FluidSystem::waterPhaseIdx);
             }
 
-            inline void get_current_density_cell(std::vector<Scalar>& rho_water, const int idx, const IntensiveQuantities& intQuants)
+            inline void get_current_density_cell(std::vector<Eval>& rho_water, const int idx, const IntensiveQuantities& intQuants)
             {
                 const auto& fs = intQuants.fluidState();
-                rho_water[idx] = fs.density(FluidSystem::waterPhaseIdx).value();
+                rho_water[idx] = fs.density(FluidSystem::waterPhaseIdx);
             }
 
             inline Scalar dpai(int idx)
             {
-                Scalar dp = pa0_ - rhow_[idx]*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx];
+                Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
                 return dp;
             }
 
@@ -395,9 +400,9 @@ namespace Opm
                 Scalar Tc = time_constant();
                 Scalar td_plus_dt = (timer.currentStepLength() + timer.simulationTimeElapsed()) / Tc;
                 Scalar td = timer.simulationTimeElapsed() / Tc;
-                Scalar PItdprime = coeff_[1] + 2.0*coeff_[2]*(td_plus_dt);
-                Scalar PItd = coeff_[0] + coeff_[1]*td_plus_dt + coeff_[2]*td_plus_dt*td_plus_dt;
-                a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_ * PItdprime) ) / ( PItd - td*PItdprime );
+                Scalar PItdprime = coeff_[2];
+                Scalar PItd = coeff_[1] + coeff_[2]*td_plus_dt;
+                a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_.value() * PItdprime) ) / ( PItd - td*PItdprime );
                 b = beta / Tc / ( PItd - td*PItdprime);
             }
 
@@ -406,7 +411,7 @@ namespace Opm
                 Scalar a, b;
                 calculate_a_b_constants(a,b,idx,timer);
                 // This function implements Eq 5.7 of the EclipseTechnicalDescription
-                Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx] - pressure_previous_[idx] ) );
+                Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx]- pressure_previous_[idx] ) );
             }
 
             inline void initialize_connections(const Aquancon::AquanconOutput& connection)
@@ -470,7 +475,8 @@ namespace Opm
                         }
                     }
                     alphai_.at(idx) = faceArea_connected/denom_face_areas;
-                    auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
+alphai_.at(idx) = 1.00;                    
+auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
                     cell_depth_.at(idx) = cellCenter[2];
                 }
             }
@@ -497,8 +503,7 @@ namespace Opm
                 pa0_ = std::accumulate(pw_aquifer.begin(), pw_aquifer.end(), 0.)/pw_aquifer.size();
                 mu_w_ = std::accumulate(mu_aquifer.begin(), mu_aquifer.end(), 0.)/mu_aquifer.size();
             }
->>>>>>> 78948fa2b4b137f1933a0c04b89b2faf0aa0c28d
-            
+
 
     }; // class AquiferCarterTracy
 
