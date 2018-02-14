@@ -29,7 +29,6 @@
 
 #include <opm/autodiff/BlackoilModelParameters.hpp>
 #include <opm/autodiff/BlackoilWellModel.hpp>
-#include <opm/autodiff/WellConnectionAuxiliaryModule.hpp>
 #include <opm/autodiff/BlackoilAquiferModel.hpp>
 #include <opm/autodiff/GridHelpers.hpp>
 #include <opm/autodiff/GeoProps.hpp>
@@ -419,13 +418,13 @@ namespace Opm {
                 if (elem.partitionType() != Dune::InteriorEntity)
                     continue;
 
-		unsigned globalElemIdx = elemMapper.index(elem);
+        unsigned globalElemIdx = elemMapper.index(elem);
                 const auto& priVarsNew = ebosSimulator_.model().solution(/*timeIdx=*/0)[globalElemIdx];
 
                 Scalar pressureNew;
-		pressureNew = priVarsNew[Indices::pressureSwitchIdx];
+        pressureNew = priVarsNew[Indices::pressureSwitchIdx];
 
-		Scalar saturationsNew[FluidSystem::numPhases] = { 0.0 };
+        Scalar saturationsNew[FluidSystem::numPhases] = { 0.0 };
                 Scalar oilSaturationNew = 1.0;
                 if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) {
                     saturationsNew[FluidSystem::waterPhaseIdx] = priVarsNew[Indices::waterSaturationIdx];
@@ -468,7 +467,7 @@ namespace Opm {
 
                 for (unsigned phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++ phaseIdx) {
                     Scalar tmp = saturationsNew[phaseIdx] - saturationsOld[phaseIdx];
-		    resultDelta += tmp*tmp;
+            resultDelta += tmp*tmp;
                     resultDenom += saturationsNew[phaseIdx]*saturationsNew[phaseIdx];
                 }
             }
@@ -476,9 +475,9 @@ namespace Opm {
             resultDelta = gridView.comm().sum(resultDelta);
             resultDenom = gridView.comm().sum(resultDenom);
 
-	    if (resultDenom > 0.0)
-	      return resultDelta/resultDenom;
-	    return 0.0;
+        if (resultDenom > 0.0)
+          return resultDelta/resultDenom;
+        return 0.0;
         }
 
 
@@ -589,7 +588,6 @@ namespace Opm {
           virtual void apply( const X& x, Y& y ) const
           {
             A_.mv( x, y );
-
             // add well model modification to y
             wellMod_.apply(x, y );
 
@@ -603,7 +601,6 @@ namespace Opm {
           virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
           {
             A_.usmv(alpha,x,y);
-
             // add scaled well model modification to y
             wellMod_.applyScaleAdd( alpha, x, y );
 
@@ -1101,29 +1098,14 @@ namespace Opm {
         const BlackoilAquiferModel<TypeTag>&
         aquiferModel() const { return aquifer_model_; }
 
-        int flowPhaseToEbosCompIdx( const int phaseIdx ) const
+        int ebosPhaseToFlowCanonicalPhaseIdx( const int phaseIdx ) const
         {
-            const auto& pu = phaseUsage_;
-            if (active_[Water] && pu.phase_pos[Water] == phaseIdx)
-                return Indices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx);
-            if (active_[Oil] && pu.phase_pos[Oil] == phaseIdx)
-                return Indices::canonicalToActiveComponentIndex(FluidSystem::oilCompIdx);
-            if (active_[Gas] && pu.phase_pos[Gas] == phaseIdx)
-                return Indices::canonicalToActiveComponentIndex(FluidSystem::gasCompIdx);
-
-            // for other phases return the index
-            return phaseIdx;
-        }
-
-        int flowPhaseToEbosPhaseIdx( const int phaseIdx ) const
-        {
-            const auto& pu = phaseUsage_;
-            if (active_[Water] && pu.phase_pos[Water] == phaseIdx)
-                return FluidSystem::waterPhaseIdx;
-            if (active_[Oil] && pu.phase_pos[Oil] == phaseIdx)
-                return FluidSystem::oilPhaseIdx;
-            if (active_[Gas] && pu.phase_pos[Gas] == phaseIdx)
-                return FluidSystem::gasPhaseIdx;
+            if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx) && FluidSystem::waterPhaseIdx == phaseIdx)
+                return Water;
+            if (FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx) && FluidSystem::oilPhaseIdx == phaseIdx)
+                return Oil;
+            if (FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx) && FluidSystem::gasPhaseIdx == phaseIdx)
+                return Gas;
 
             assert(phaseIdx < 3);
             // for other phases return the index
@@ -1141,7 +1123,6 @@ namespace Opm {
         }
 
     private:
-
 
         double dpMaxRel() const { return param_.dp_max_rel_; }
         double dsMax() const { return param_.ds_max_; }
