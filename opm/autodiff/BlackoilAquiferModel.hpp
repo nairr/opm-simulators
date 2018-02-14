@@ -3,11 +3,6 @@
 
   Copyright 2017 TNO - Heat Transfer & Fluid Dynamics, Modelling & Optimization of the Subsurface
   Copyright 2017 Statoil ASA.
-  Copyright 2016 SINTEF ICT, Applied Mathematics.
-  Copyright 2016 - 2017 Statoil ASA.
-  Copyright 2017 Dr. Blatt - HPC-Simulation-Software & Services
-  Copyright 2016 - 2017 IRIS AS
-
 
   This file is part of the Open Porous Media project (OPM).
 
@@ -50,7 +45,6 @@
 #include <opm/autodiff/BlackoilDetails.hpp>
 #include <opm/autodiff/BlackoilModelParameters.hpp>
 #include <opm/autodiff/RateConverter.hpp>
-
 #include <opm/autodiff/AquiferCarterTracy.hpp>
 
 #include <opm/parser/eclipse/Deck/Deck.hpp>
