@@ -205,7 +205,7 @@ namespace Opm
 		      std::cout<<" inflow derivative = "<<qinflow.derivative(pvIdx)<<std::endl;
 		      std::cout<<" Jac before update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx]<<std::endl;
 		      
-                        ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx] += qinflow.derivative(pvIdx);
+                        ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx] -= qinflow.derivative(pvIdx);
 			std::cout<<" Jac after update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx]<<std::endl;
                     }
                     std::cout << "Debug 9c" << std::endl;
@@ -389,7 +389,9 @@ namespace Opm
 
             inline Scalar dpai(int idx)
             {
-                Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
+              std::cout<<" pa0_ = " << pa0_ <<" rhow_ = " <<  rhow_[idx].value() <<"gravity = " <<gravity_<<std::endl;
+	      std::cout<<" cell_depth = "<<cell_depth_[idx]<<"d0_ "<< d0_<<"pressure_previous = "<<pressure_previous_[idx].value()<<std::endl;
+	      Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
                 return dp;
             }
 
@@ -411,7 +413,10 @@ namespace Opm
                 Scalar a, b;
                 calculate_a_b_constants(a,b,idx,timer);
                 // This function implements Eq 5.7 of the EclipseTechnicalDescription
-                Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx]- pressure_previous_[idx] ) );
+		//std::cout<<"current_derivative = "<<pressure_current_[idx].derivative() <<" previous derivative = "<<pressure_previous_[idx].derivative()<<std::endl;
+		
+                Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx]- pressure_previous_[idx].value() ) );
+		//std::cout<<"Qai_derivative = "<<Qai_[idx].derivative()<<std::endl;
             }
 
             inline void initialize_connections(const Aquancon::AquanconOutput& connection)
@@ -475,8 +480,8 @@ namespace Opm
                         }
                     }
                     alphai_.at(idx) = faceArea_connected/denom_face_areas;
-alphai_.at(idx) = 1.00;                    
-auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
+		    alphai_.at(idx) = 1.00;                    
+		    auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
                     cell_depth_.at(idx) = cellCenter[2];
                 }
             }
@@ -485,23 +490,25 @@ auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
             inline void calculate_reservoir_equilibrium()
             {
                 // Since the global_indices are the reservoir index, we just need to extract the fluidstate at those indices
-                std::vector<Scalar> water_pressure_reservoir, rho_water_reservoir, pw_aquifer, mu_aquifer;
+                std::vector<Eval> water_pressure_reservoir, rho_water_reservoir, pw_aquifer, mu_aquifer;
                 
                 auto cellID = cell_idx_.begin();
                 for (int idx = 0; cellID != cell_idx_.end(); ++cellID, ++idx )
                 {
                     const auto& intQuants = *(ebos_simulator_.model().cachedIntensiveQuantities(*cellID, /*timeIdx=*/ 0));
                     const auto& fs = intQuants.fluidState();
-                    auto fs_aquifer = fs;
-                    fs_aquifer.setPvtRegionIndex(pvttableID_);
-                    water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx).value() );
-                    rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx).value() );
+                    //auto fs_aquifer = fs;
+                    //fs_aquifer.setPvtRegionIndex(pvttableID_);
+                    //water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx).value() );
+                    //rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx).value() );
+		    water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx) );
+                    rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx));
                     pw_aquifer.push_back( water_pressure_reservoir.at(idx) - rho_water_reservoir.at(idx)*gravity_*(cell_depth_.at(idx) - d0_) );
-                    mu_aquifer.push_back( fs_aquifer.viscosity(FluidSystem::waterPhaseIdx).value() );
+                    //mu_aquifer.push_back( fs_aquifer.viscosity(FluidSystem::waterPhaseIdx).value() );
                 }
 
-                pa0_ = std::accumulate(pw_aquifer.begin(), pw_aquifer.end(), 0.)/pw_aquifer.size();
-                mu_w_ = std::accumulate(mu_aquifer.begin(), mu_aquifer.end(), 0.)/mu_aquifer.size();
+                //pa0_ = std::accumulate(pw_aquifer.begin(), pw_aquifer.end(), 0.)/pw_aquifer.size();
+                //mu_w_ = std::accumulate(mu_aquifer.begin(), mu_aquifer.end(), 0.)/mu_aquifer.size();
             }
 
 
