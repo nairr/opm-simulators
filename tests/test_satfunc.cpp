@@ -4,11 +4,6 @@
 
 #include "config.h"
 
-/* --- Boost.Test boilerplate --- */
-#if HAVE_DYNAMIC_BOOST_TEST
-#define BOOST_TEST_DYN_LINK
-#endif
-
 #define NVERBOSE  // Suppress own messages when throw()ing
 
 #define BOOST_TEST_MODULE UnitsTest
@@ -19,9 +14,9 @@
 
 #include <opm/core/simulator/initStateEquil.hpp>
 
-#include <opm/core/grid.h>
-#include <opm/core/grid/cart_grid.h>
-#include <opm/core/grid/GridManager.hpp>
+#include <opm/grid/UnstructuredGrid.h>
+#include <opm/grid/cart_grid.h>
+#include <opm/grid/GridManager.hpp>
 
 #include <opm/core/props/BlackoilPropertiesBasic.hpp>
 #include <opm/core/props/BlackoilPropertiesFromDeck.hpp>
@@ -33,7 +28,7 @@
 
 #include <opm/core/pressure/msmfem/partition.h>
 
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
 #include <opm/parser/eclipse/Units/Units.hpp>
 
 #include <array>

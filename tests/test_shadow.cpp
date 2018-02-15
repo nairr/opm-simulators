@@ -2,9 +2,6 @@
    This file is licensed under the GNU General Public License v3.0 or later. */
 #include <config.h>
 
-#if HAVE_DYNAMIC_BOOST_TEST
-#define BOOST_TEST_DYN_LINK
-#endif
 #define NVERBOSE // to suppress our messages when throwing
 
 #define BOOST_TEST_MODULE ShadowTest
@@ -12,7 +9,7 @@
 #include <boost/test/unit_test.hpp>
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
 #include <opm/core/props/IncompPropertiesBasic.hpp>
 #include <opm/core/props/IncompPropertiesShadow.hpp>
 

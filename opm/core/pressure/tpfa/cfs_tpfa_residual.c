@@ -8,12 +8,12 @@
 
 #include <opm/core/wells.h>
 #include <opm/core/well_controls.h>
-#include <opm/core/linalg/blas_lapack.h>
+#include <opm/common/utility/numeric/blas_lapack.h>
 #include <opm/core/linalg/sparse_sys.h>
 
 #include <opm/core/pressure/tpfa/compr_quant_general.h>
 #include <opm/core/pressure/tpfa/compr_source.h>
-#include <opm/core/pressure/tpfa/trans_tpfa.h>
+#include <opm/grid/transmissibility/trans_tpfa.h>
 
 #include <opm/core/pressure/tpfa/cfs_tpfa_residual.h>
 

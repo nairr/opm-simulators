@@ -39,7 +39,7 @@
 #include <opm/autodiff/VFPProdProperties.hpp>
 #include <opm/autodiff/VFPInjProperties.hpp>
 
-#include <opm/core/grid.h>
+#include <opm/grid/UnstructuredGrid.h>
 #include <opm/core/linalg/LinearSolverInterface.hpp>
 #include <opm/core/linalg/ParallelIstlInformation.hpp>
 #include <opm/core/props/rock/RockCompressibility.hpp>
@@ -48,7 +48,7 @@
 #include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/parser/eclipse/Units/Units.hpp>
 #include <opm/core/well_controls.h>
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
 #include <opm/parser/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/TableManager.hpp>
 
@@ -1562,7 +1562,7 @@ typedef Eigen::Array<double,
             const double massBalanceResid = detail::infinityNorm( (*massBalanceIt),
                                                                   linsolver_.parallelInformation() );
             if (!std::isfinite(massBalanceResid)) {
-                OPM_THROW(Opm::NumericalProblem,
+                OPM_THROW(Opm::NumericalIssue,
                           "Encountered a non-finite residual");
             }
             residualNorms.push_back(massBalanceResid);
@@ -1572,7 +1572,7 @@ typedef Eigen::Array<double,
         const double wellFluxResid = detail::infinityNormWell( residual_.well_flux_eq,
                                                                linsolver_.parallelInformation() );
         if (!std::isfinite(wellFluxResid)) {
-            OPM_THROW(Opm::NumericalProblem,
+            OPM_THROW(Opm::NumericalIssue,
                "Encountered a non-finite residual");
         }
         residualNorms.push_back(wellFluxResid);
@@ -1580,7 +1580,7 @@ typedef Eigen::Array<double,
         const double wellResid = detail::infinityNormWell( residual_.well_eq,
                                                            linsolver_.parallelInformation() );
         if (!std::isfinite(wellResid)) {
-           OPM_THROW(Opm::NumericalProblem,
+           OPM_THROW(Opm::NumericalIssue,
                "Encountered a non-finite residual");
         }
         residualNorms.push_back(wellResid);
@@ -1833,7 +1833,7 @@ typedef Eigen::Array<double,
                 if (terminal_output_) {
                     OpmLog::bug(msg);
                 }
-                OPM_THROW_NOLOG(Opm::NumericalProblem, msg);
+                OPM_THROW_NOLOG(Opm::NumericalIssue, msg);
             }
             if (mass_balance_residual[idx] > maxResidualAllowed()
                 || CNV[idx] > maxResidualAllowed()
@@ -1842,7 +1842,7 @@ typedef Eigen::Array<double,
                 if (terminal_output_) {
                     OpmLog::problem(msg);
                 }
-                OPM_THROW_NOLOG(Opm::NumericalProblem, msg);
+                OPM_THROW_NOLOG(Opm::NumericalIssue, msg);
             }
         }
         if (std::isnan(residualWell) || residualWell > maxWellResidualAllowed) {
@@ -1850,7 +1850,7 @@ typedef Eigen::Array<double,
             if (terminal_output_) {
                 OpmLog::problem(msg);
             }
-            OPM_THROW_NOLOG(Opm::NumericalProblem, msg);
+            OPM_THROW_NOLOG(Opm::NumericalIssue, msg);
         }
 
         return converged;
@@ -1912,14 +1912,14 @@ typedef Eigen::Array<double,
                 if (terminal_output_) {
                     OpmLog::bug(msg);
                 }
-                OPM_THROW_NOLOG(Opm::NumericalProblem, msg);
+                OPM_THROW_NOLOG(Opm::NumericalIssue, msg);
             }
             if (well_flux_residual[idx] > maxResidualAllowed()) {
                 const auto msg = std::string("Too large residual for phase ") +  materialName(idx);
                 if (terminal_output_) {
                     OpmLog::problem(msg);
                 }
-                OPM_THROW_NOLOG(Opm::NumericalProblem, msg);
+                OPM_THROW_NOLOG(Opm::NumericalIssue, msg);
             }
         }
 

@@ -20,10 +20,6 @@
 
 #include <config.h>
 
-#if HAVE_DYNAMIC_BOOST_TEST
-#define BOOST_TEST_DYN_LINK
-#endif
-
 #define BOOST_TEST_MODULE VoidageRateConversionTest
 
 #include <opm/autodiff/RateConverter.hpp>
@@ -32,11 +28,11 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <opm/core/grid/GridHelpers.hpp>
-#include <opm/core/grid/GridManager.hpp>
+#include <opm/grid/GridHelpers.hpp>
+#include <opm/grid/GridManager.hpp>
 #include <opm/core/props/BlackoilPropertiesFromDeck.hpp>
 #include <opm/parser/eclipse/Units/Units.hpp>
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
 #include <opm/core/simulator/BlackoilState.hpp>
 
 #include <opm/parser/eclipse/Parser/Parser.hpp>

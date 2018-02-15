@@ -18,16 +18,16 @@
 */
 
 #include "config.h"
-#include <opm/core/grid/CellQuadrature.hpp>
-#include <opm/core/grid/FaceQuadrature.hpp>
+#include <opm/grid/CellQuadrature.hpp>
+#include <opm/grid/FaceQuadrature.hpp>
 #include <opm/core/flowdiagnostics/TofDiscGalReorder.hpp>
 #include <opm/core/flowdiagnostics/DGBasis.hpp>
-#include <opm/core/grid.h>
+#include <opm/grid/UnstructuredGrid.h>
 #include <opm/common/ErrorMacros.hpp>
-#include <opm/core/utility/SparseTable.hpp>
-#include <opm/core/utility/VelocityInterpolation.hpp>
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
-#include <opm/core/linalg/blas_lapack.h>
+#include <opm/grid/utility/SparseTable.hpp>
+#include <opm/grid/utility/VelocityInterpolation.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
+#include <opm/common/utility/numeric/blas_lapack.h>
 
 #include <algorithm>
 #include <cmath>

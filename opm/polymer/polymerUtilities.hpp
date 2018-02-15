@@ -21,14 +21,14 @@
 #define OPM_POLYMERUTILITIES_HEADER_INCLUDED
 
 
-#include <opm/core/grid.h>
+#include <opm/grid/UnstructuredGrid.h>
 #include <opm/core/props/IncompPropertiesInterface.hpp>
 #include <opm/core/props/BlackoilPropertiesInterface.hpp>
 #include <opm/polymer/PolymerProperties.hpp>
 #include <opm/polymer/PolymerState.hpp>
 #include <opm/polymer/PolymerBlackoilState.hpp>
 #include <opm/core/props/rock/RockCompressibility.hpp>
-#include <opm/core/utility/SparseVector.hpp>
+#include <opm/common/utility/numeric/SparseVector.hpp>
 #include <vector>
 
 

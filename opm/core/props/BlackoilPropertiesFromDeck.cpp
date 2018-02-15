@@ -21,9 +21,9 @@
 #include <opm/core/props/BlackoilPropertiesFromDeck.hpp>
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawManager.hpp>
 #include <opm/core/props/phaseUsageFromDeck.hpp>
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
-#include <opm/core/utility/compressedToCartesian.hpp>
-#include <opm/core/utility/extractPvtTableIndex.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
+#include <opm/grid/utility/compressedToCartesian.hpp>
+#include <opm/grid/utility/extractPvtTableIndex.hpp>
 #include <vector>
 #include <numeric>
 

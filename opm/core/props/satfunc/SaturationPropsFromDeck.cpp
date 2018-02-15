@@ -22,9 +22,9 @@
 
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawManager.hpp>
 
-#include <opm/core/utility/UniformTableLinear.hpp>
-#include <opm/core/utility/NonuniformTableLinear.hpp>
-#include <opm/core/grid/GridHelpers.hpp>
+#include <opm/common/utility/numeric/UniformTableLinear.hpp>
+#include <opm/common/utility/numeric/NonuniformTableLinear.hpp>
+#include <opm/grid/GridHelpers.hpp>
 #include <opm/core/simulator/ExplicitArraysFluidState.hpp>
 #include <opm/core/simulator/ExplicitArraysSatDerivativesFluidState.hpp>
 

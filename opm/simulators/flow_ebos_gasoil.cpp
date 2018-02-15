@@ -21,10 +21,10 @@
 
 #include <opm/simulators/flow_ebos_gasoil.hpp>
 
-#include <opm/common/ResetLocale.hpp>
+#include <opm/material/common/ResetLocale.hpp>
 #include <ewoms/models/blackoil/blackoiltwophaseindices.hh>
 
-#include <dune/grid/CpGrid.hpp>
+#include <opm/grid/CpGrid.hpp>
 #include <opm/autodiff/SimulatorFullyImplicitBlackoilEbos.hpp>
 #include <opm/autodiff/FlowMainEbos.hpp>
 
@@ -48,9 +48,9 @@ namespace Opm {
 void flowEbosGasOilSetDeck(Deck &deck, EclipseState& eclState, Schedule& schedule,  SummaryConfig& summaryConfig)
 {
     typedef TTAG(EclFlowGasOilProblem) TypeTag;
-    typedef GET_PROP_TYPE(TypeTag, GridManager) GridManager;
+    typedef GET_PROP_TYPE(TypeTag, Vanguard) Vanguard;
 
-    GridManager::setExternalDeck(&deck, &eclState, &schedule, &summaryConfig);
+    Vanguard::setExternalDeck(&deck, &eclState, &schedule, &summaryConfig);
 }
 
 

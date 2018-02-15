@@ -20,10 +20,6 @@
 
 #include <config.h>
 
-#if HAVE_DYNAMIC_BOOST_TEST
-#define BOOST_TEST_DYN_LINK
-#endif
-
 #define BOOST_TEST_MODULE FluidPropertiesTest
 
 #include <opm/common/utility/platform_dependent/disable_warnings.h>
@@ -32,9 +28,9 @@
 
 #include <opm/autodiff/BlackoilPropsAdFromDeck.hpp>
 
-#include <opm/core/grid/GridManager.hpp>
+#include <opm/grid/GridManager.hpp>
 #include <opm/parser/eclipse/Units/Units.hpp>
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
 
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseContext.hpp>

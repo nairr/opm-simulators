@@ -27,8 +27,8 @@
 #include <fstream>
 #include <vector>
 #include <cassert>
-#include <opm/core/grid.h>
-#include <opm/core/grid/GridManager.hpp>
+#include <opm/grid/UnstructuredGrid.h>
+#include <opm/grid/GridManager.hpp>
 // 17.03.2016 Temporarily removed while moving functionality to opm-output
 #ifdef DISABLE_OUTPUT
 #include <opm/core/io/vtk/writeVtkData.hpp>
@@ -46,7 +46,7 @@
 
 #include <opm/core/utility/miscUtilities.hpp>
 #include <opm/parser/eclipse/Units/Units.hpp>
-#include <opm/core/utility/parameters/ParameterGroup.hpp>
+#include <opm/common/utility/parameters/ParameterGroup.hpp>
 #include <opm/core/wells/WellCollection.hpp>
 
 /// \page tutorial4 Well controls

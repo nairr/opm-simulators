@@ -35,7 +35,7 @@ function(add_test_compareECLFiles)
   opm_add_test(${PARAM_PREFIX}_${PARAM_SIMULATOR}+${PARAM_FILENAME} NO_COMPILE
                EXE_NAME ${PARAM_SIMULATOR}
                DRIVER_ARGS ${OPM_DATA_ROOT}/${PARAM_DIR} ${RESULT_PATH}
-                           ${CMAKE_BINARY_DIR}/bin
+                           ${PROJECT_BINARY_DIR}/bin
                            ${PARAM_FILENAME}
                            ${PARAM_ABS_TOL} ${PARAM_REL_TOL}
                            ${COMPARE_SUMMARY_COMMAND}
@@ -64,7 +64,7 @@ function(add_test_compare_restarted_simulation)
   opm_add_test(compareRestartedSim_${PARAM_SIMULATOR}+${PARAM_FILENAME} NO_COMPILE
                EXE_NAME ${PARAM_SIMULATOR}
                DRIVER_ARGS ${OPM_DATA_ROOT}/${PARAM_CASENAME} ${RESULT_PATH}
-                           ${CMAKE_BINARY_DIR}/bin
+                           ${PROJECT_BINARY_DIR}/bin
                            ${PARAM_FILENAME}
                            ${PARAM_ABS_TOL} ${PARAM_REL_TOL}
                            ${COMPARE_SUMMARY_COMMAND}
@@ -95,7 +95,7 @@ function(add_test_compare_parallel_simulation)
   opm_add_test(compareParallelSim_${PARAM_SIMULATOR}+${PARAM_FILENAME} NO_COMPILE
                EXE_NAME ${PARAM_SIMULATOR}
                DRIVER_ARGS ${OPM_DATA_ROOT}/${PARAM_CASENAME} ${RESULT_PATH}
-                           ${CMAKE_BINARY_DIR}/bin
+                           ${PROJECT_BINARY_DIR}/bin
                            ${PARAM_FILENAME}
                            ${PARAM_ABS_TOL} ${PARAM_REL_TOL}
                            ${COMPARE_SUMMARY_COMMAND}
@@ -119,13 +119,13 @@ function(add_test_compare_parallel_restarted_simulation)
   set(multiValueArgs TEST_ARGS)
   cmake_parse_arguments(PARAM "$" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
-  set(RESULT_PATH ${BASE_RESULT_PATH}/restart/${PARAM_SIMULATOR}+${PARAM_CASENAME})
+  set(RESULT_PATH ${BASE_RESULT_PATH}/parallelRestart/${PARAM_SIMULATOR}+${PARAM_CASENAME})
   set(TEST_ARGS ${OPM_DATA_ROOT}/${PARAM_CASENAME}/${PARAM_FILENAME} ${PARAM_TEST_ARGS})
 
   opm_add_test(compareParallelRestartedSim_${PARAM_SIMULATOR}+${PARAM_FILENAME} NO_COMPILE
                EXE_NAME ${PARAM_SIMULATOR}
                DRIVER_ARGS ${OPM_DATA_ROOT}/${PARAM_CASENAME} ${RESULT_PATH}
-                           ${CMAKE_BINARY_DIR}/bin
+                           ${PROJECT_BINARY_DIR}/bin
                            ${PARAM_FILENAME}
                            ${PARAM_ABS_TOL} ${PARAM_REL_TOL}
                            ${COMPARE_SUMMARY_COMMAND}
