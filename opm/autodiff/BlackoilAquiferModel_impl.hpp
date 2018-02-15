@@ -12,7 +12,7 @@ namespace Opm {
         , has_solvent_(GET_PROP_VALUE(TypeTag, EnableSolvent))
         , has_polymer_(GET_PROP_VALUE(TypeTag, EnablePolymer))
     {
-        const auto& eclState = ebosSimulator_.gridManager().eclState();
+        const auto& eclState = ebosSimulator_.vanguard().eclState();
         phase_usage_ = phaseUsageFromDeck(eclState);
 
         active_.resize(phase_usage_.MaxNumPhases, false);
@@ -266,8 +266,8 @@ namespace Opm {
     void
     BlackoilAquiferModel<TypeTag>:: init(const Simulator& ebosSimulator, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)//, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)
     {
-        const auto& deck = ebosSimulator.gridManager().deck();
-        const auto& eclState = ebosSimulator.gridManager().eclState();
+        const auto& deck = ebosSimulator.vanguard().deck();
+        const auto& eclState = ebosSimulator.vanguard().eclState();
         
         // Get all the carter tracy aquifer properties data and put it in aquifers vector
         AquiferCT aquiferct = AquiferCT(eclState,deck);

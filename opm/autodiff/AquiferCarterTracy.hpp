@@ -416,8 +416,8 @@ namespace Opm
 
             inline void initialize_connections(const Aquancon::AquanconOutput& connection)
             {
-                const auto& eclState = ebos_simulator_.gridManager().eclState();
-                const auto& ugrid = ebos_simulator_.gridManager().grid();
+                const auto& eclState = ebos_simulator_.vanguard().eclState();
+                const auto& ugrid = ebos_simulator_.vanguard().grid();
                 const auto& grid = eclState.getInputGrid();
 
                 cell_idx_ = connection.global_index;
