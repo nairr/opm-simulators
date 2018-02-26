@@ -195,18 +195,18 @@ namespace Opm
                     std::cout << "Debug 9" << " " << Qai_.size() << " " << cell_idx_.size() << std::endl;
                     qinflow = Qai_[idx];
                     std::cout << "Debug 9a" << " " << *cellID << std::endl;
-                    std::cout <<"debug stuff" << " " << (FluidSystem::waterPhaseIdx) << std::endl;
-                    ebosResid[*cellID][(FluidSystem::waterPhaseIdx)] -= qinflow.value();
+                    std::cout <<"debug stuff" << " " << (FluidSystem::waterCompIdx) << std::endl;
+                    ebosResid[*cellID][(FluidSystem::waterCompIdx)] -= qinflow.value();
                     std::cout << "Debug 9b" << std::endl;
 
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) 
                     {
                         // also need to consider the efficiency factor when manipulating the jacobians.
-		      std::cout<<" inflow derivative = "<<qinflow.derivative(pvIdx)<<std::endl;
-		      std::cout<<" Jac before update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx]<<std::endl;
+		                std::cout<<" inflow derivative = "<<qinflow.derivative(pvIdx)<<std::endl;
+		                std::cout<<" Jac before update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
 		      
-                        ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx] -= qinflow.derivative(pvIdx);
-			std::cout<<" Jac after update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterPhaseIdx)][pvIdx]<<std::endl;
+                        ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx] -= qinflow.derivative(pvIdx);
+			            std::cout<<" Jac after update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
                     }
                     std::cout << "Debug 9c" << std::endl;
                     std::cout << "In CarterTracy<assembleAquiferEq>: I am aquifer #" << aquiferID_
@@ -365,7 +365,7 @@ namespace Opm
                 // or we get the information from the deck Hacked to make it at 45e6 Pa
                 //calculate_reservoir_equilibrium();
                 pa0_ = 1e8;
-                mu_w_ = 0.5;
+                mu_w_ = 0.5e-3;
                 pressure_previous_.resize(cell_idx_.size(), 0.);
                 pressure_current_.resize(cell_idx_.size(), 0.);
 
@@ -402,8 +402,10 @@ namespace Opm
                 Scalar Tc = time_constant();
                 Scalar td_plus_dt = (timer.currentStepLength() + timer.simulationTimeElapsed()) / Tc;
                 Scalar td = timer.simulationTimeElapsed() / Tc;
-                Scalar PItdprime = coeff_[2];
-                Scalar PItd = coeff_[1] + coeff_[2]*td_plus_dt;
+                std::cout<<"T = "<<timer.simulationTimeElapsed()<<std::endl;
+                Scalar PItdprime = coeff_.at(1);
+                Scalar PItd = coeff_.at(0) + coeff_.at(1)*td_plus_dt;
+                std::cout<< "ccoeff_.at(0) = " << coeff_.at(0)<<" coeff_.at(1) = "<<coeff_.at(1)<<std::endl;
                 a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_.value() * PItdprime) ) / ( PItd - td*PItdprime );
                 b = beta / Tc / ( PItd - td*PItdprime);
             }
@@ -413,10 +415,10 @@ namespace Opm
                 Scalar a, b;
                 calculate_a_b_constants(a,b,idx,timer);
                 // This function implements Eq 5.7 of the EclipseTechnicalDescription
-		//std::cout<<"current_derivative = "<<pressure_current_[idx].derivative() <<" previous derivative = "<<pressure_previous_[idx].derivative()<<std::endl;
+		         std::cout<<"current_pressure = "<<pressure_current_[idx].value() <<" previous_pressure = "<<pressure_previous_[idx].value()<<std::endl;
 		
                 Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx]- pressure_previous_[idx].value() ) );
-		//std::cout<<"Qai_derivative = "<<Qai_[idx].derivative()<<std::endl;
+		        std::cout<<"Q = "<<Qai_[idx].value()<<std::endl;
             }
 
             inline void initialize_connections(const Aquancon::AquanconOutput& connection)
