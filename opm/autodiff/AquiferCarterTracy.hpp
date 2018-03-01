@@ -128,41 +128,6 @@ namespace Opm
                 return *phase_usage_;
             }
 
-            inline int
-            flowPhaseToEbosCompIdx( const int phaseIdx ) const
-            {
-                const auto& pu = phaseUsage();
-                std::cout << "flow 1" << std::endl;
-                if (pu.phase_pos[Water] == phaseIdx)
-                    return BlackoilIndices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx);
-                if (pu.phase_pos[Oil] == phaseIdx)
-                    return BlackoilIndices::canonicalToActiveComponentIndex(FluidSystem::oilCompIdx);
-                if (pu.phase_pos[Gas] == phaseIdx)
-                    return BlackoilIndices::canonicalToActiveComponentIndex(FluidSystem::gasCompIdx);
-                std::cout << "flow 2" << std::endl;
-                // for other phases return the index
-                return phaseIdx;
-            }
-
-            inline int
-            flowPhaseToEbosPhaseIdx( const int phaseIdx ) const
-            {
-                const auto& pu = phaseUsage();
-                if (pu.phase_pos[Water] == phaseIdx) {
-                    return FluidSystem::waterPhaseIdx;
-                }
-                if (pu.phase_pos[Oil] == phaseIdx) {
-                    return FluidSystem::oilPhaseIdx;
-                }
-                if (pu.phase_pos[Gas] == phaseIdx) {
-                    return FluidSystem::gasPhaseIdx;
-                }
-
-                assert(phaseIdx < 3);
-                // for other phases return the index
-                return phaseIdx;
-            }
-
             inline void calculateExplicitQuantities(const Simulator& ebosSimulator)
             {
                 std::cout << "In CarterTracy<calculateExplicitQuantities>: I am aquifer #" << aquiferID_ << std::endl;
@@ -232,7 +197,7 @@ namespace Opm
                 {
                     W_flux_ += (*Qai);
                 }
-                std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_ << std::endl;
+                std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << std::endl;
             }
 
             /* Made into public for testing only!!!!!!. Must be protected */
@@ -321,7 +286,7 @@ namespace Opm
 
             // Cumulative flux
             Scalar dt_, pa0_, gravity_;
-        Eval W_flux_;
+            Eval W_flux_;
             // Also return the polynomial fit
             std::vector<Scalar> coeff_;
             
@@ -389,9 +354,9 @@ namespace Opm
 
             inline Scalar dpai(int idx)
             {
-              std::cout<<" pa0_ = " << pa0_ <<" rhow_ = " <<  rhow_[idx].value() <<"gravity = " <<gravity_<<std::endl;
-          std::cout<<" cell_depth = "<<cell_depth_[idx]<<"d0_ "<< d0_<<"pressure_previous = "<<pressure_previous_[idx].value()<<std::endl;
-          Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
+                std::cout<<" pa0_ = " << pa0_ <<" rhow_ = " <<  rhow_[idx].value() <<"gravity = " <<gravity_<<std::endl;
+                std::cout<<" cell_depth = "<<cell_depth_[idx]<<"d0_ "<< d0_<<"pressure_previous = "<<pressure_previous_[idx].value()<<std::endl;
+                Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
                 return dp;
             }
 
@@ -415,9 +380,11 @@ namespace Opm
                 Scalar a, b;
                 calculate_a_b_constants(a,b,idx,timer);
                 // This function implements Eq 5.7 of the EclipseTechnicalDescription
-                 std::cout<<"current_pressure = "<<pressure_current_[idx].value() <<" previous_pressure = "<<pressure_previous_[idx].value()<<std::endl;
+                std::cout<<"previous_pressure = "<< pressure_previous_[idx] <<" previous_pressure = "<< pressure_previous_[idx].value() <<std::endl;
+                std::cout<<"current_pressure = "<<pressure_current_[idx] <<" current_pressure_val = "<< pressure_current_[idx].value() <<std::endl;
         
-                Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx]- pressure_previous_[idx].value() ) );
+                Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx] - pressure_previous_[idx].value() ) );
+
                 std::cout<<"Q = "<<Qai_[idx].value()<<std::endl;
             }
 
@@ -482,8 +449,8 @@ namespace Opm
                         }
                     }
                     alphai_.at(idx) = faceArea_connected/denom_face_areas;
-            alphai_.at(idx) = 1.00;                    
-            auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
+                    alphai_.at(idx) = 1.00; // Hardcoding area fraction to 1.
+                    auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
                     cell_depth_.at(idx) = cellCenter[2];
                 }
             }
@@ -503,7 +470,7 @@ namespace Opm
                     //fs_aquifer.setPvtRegionIndex(pvttableID_);
                     //water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx).value() );
                     //rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx).value() );
-            water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx) );
+                    water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx) );
                     rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx));
                     pw_aquifer.push_back( water_pressure_reservoir.at(idx) - rho_water_reservoir.at(idx)*gravity_*(cell_depth_.at(idx) - d0_) );
                     //mu_aquifer.push_back( fs_aquifer.viscosity(FluidSystem::waterPhaseIdx).value() );
