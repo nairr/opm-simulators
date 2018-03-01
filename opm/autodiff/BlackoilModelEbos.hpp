@@ -32,6 +32,7 @@
 #include <opm/autodiff/BlackoilAquiferModel.hpp>
 #include <opm/autodiff/GridHelpers.hpp>
 #include <opm/autodiff/GeoProps.hpp>
+#include <opm/autodiff/WellConnectionAuxiliaryModule.hpp>
 #include <opm/autodiff/BlackoilDetails.hpp>
 #include <opm/autodiff/NewtonIterationBlackoilInterface.hpp>
 
