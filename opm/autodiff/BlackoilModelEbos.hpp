@@ -340,12 +340,12 @@ namespace Opm {
                        const ReservoirState& reservoir_state,
                        WellState& well_state)
         {
-            DUNE_UNUSED_PARAMETER(timer);
+            // DUNE_UNUSED_PARAMETER(timer);
             DUNE_UNUSED_PARAMETER(reservoir_state);
             DUNE_UNUSED_PARAMETER(well_state);
 
             wellModel().timeStepSucceeded();
-            aquiferModel().timeStepSucceeded();
+            aquiferModel().timeStepSucceeded(timer);
             ebosSimulator_.problem().endTimeStep();
 
         }
