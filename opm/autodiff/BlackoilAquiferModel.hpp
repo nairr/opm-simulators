@@ -97,7 +97,7 @@ namespace Opm {
             // called at the beginning of a time step
             void beginTimeStep();
             // called at the end of a time step
-            void timeStepSucceeded();
+            void timeStepSucceeded(const SimulatorTimerInterface& timer);
 
             // called at the beginning of a report step
             void beginReportStep(const int time_step);

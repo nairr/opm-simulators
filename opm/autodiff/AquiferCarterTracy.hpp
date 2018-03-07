@@ -105,7 +105,7 @@ namespace Opm
               k_a_ (params.k_a), //
               c1_ (params.c1),
               h_ (params.h), //
-              theta_ (params.theta), //
+              theta_ (params.theta/360.0), //
               c2_ (params.c2), //
               d0_ (params.d0),
               aqutab_td_ (params.td),
@@ -191,26 +191,27 @@ namespace Opm
                 }
             }
 
-            inline void after_time_step()
+            inline void after_time_step(const SimulatorTimerInterface& timer)
             {
                 for (auto Qai = Qai_.begin(); Qai != Qai_.end(); ++Qai)
                 {
-                    W_flux_ += (*Qai);
+                    W_flux_ += (*Qai)*timer.currentStepLength();
                 }
-                std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << std::endl;
+                std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << ", Perm = " << k_a_ << std::endl;
+                std::cout << "DT " << timer.currentStepLength() << std::endl;
             }
 
             /* Made into public for testing only!!!!!!. Must be protected */
             inline const Scalar time_constant() const
             {
-                Scalar Tc = mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
+                Scalar Tc = (1.0/1.0132e7)*mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
                 return Tc;
             }
 
             /* Made into public for testing only!!!!!!. Must be protected */
             inline const Scalar aquifer_influx_constant() const
             {
-                Scalar beta = c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
+                Scalar beta = 1e5*c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
                 return beta;
             }
 
@@ -328,13 +329,14 @@ namespace Opm
 
                 // pa0_ is the initial aquifer water pressure. Must be calculated from equilibrium if left default,
                 // or we get the information from the deck Hacked to make it at 45e6 Pa
-                //calculate_reservoir_equilibrium();
-                pa0_ = 1e8;
-                mu_w_ = 0.5e-3;
+                // calculate_reservoir_equilibrium();
+                pa0_ = 0.45e8; // Add a call to opm-parser to get the user-defined aquifer pressure (if exist)
+
+                rhow_.resize(cell_idx_.size(), 1038.0); // Get from PVT table index (user defined)
+                mu_w_ = 0.318e-3; // Ditto as rhow
+
                 pressure_previous_.resize(cell_idx_.size(), 0.);
                 pressure_current_.resize(cell_idx_.size(), 0.);
-
-                rhow_.resize(cell_idx_.size(), 1000.0); 
                 Qai_.resize(cell_idx_.size(), 0.0);
 
                 polynomial_fit(aqutab_td_, aqutab_pi_, coeff_, 1, true);
@@ -370,9 +372,11 @@ namespace Opm
                 std::cout<<"T = "<<timer.simulationTimeElapsed()<<std::endl;
                 Scalar PItdprime = coeff_.at(1);
                 Scalar PItd = coeff_.at(0) + coeff_.at(1)*td_plus_dt;
+                // Scalar PItdprime = 0.;
+                // Scalar PItd = 1.;
                 std::cout<< "ccoeff_.at(0) = " << coeff_.at(0)<<" coeff_.at(1) = "<<coeff_.at(1)<<std::endl;
                 a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_.value() * PItdprime) ) / ( PItd - td*PItdprime );
-                b = beta / Tc / ( PItd - td*PItdprime);
+                b = beta / (Tc * ( PItd - td*PItdprime));
             }
 
             inline void calculate_inflow_rate(int idx, const SimulatorTimerInterface& timer)

@@ -44,11 +44,11 @@ namespace Opm {
     // called at the end of a time step
     template<typename TypeTag>
     void
-    BlackoilAquiferModel<TypeTag>:: timeStepSucceeded()
+    BlackoilAquiferModel<TypeTag>:: timeStepSucceeded(const SimulatorTimerInterface& timer)
     {
         for (auto aquifer = aquifers_.begin(); aquifer != aquifers_.end(); ++aquifer)
         {
-            aquifer->after_time_step();
+            aquifer->after_time_step(timer);
         }
     }
 
