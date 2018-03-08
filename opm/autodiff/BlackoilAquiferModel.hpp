@@ -97,7 +97,11 @@ namespace Opm {
             // called at the beginning of a time step
             void beginTimeStep();
             // called at the end of a time step
+<<<<<<< HEAD
             void timeStepSucceeded();
+=======
+            void timeStepSucceeded(const SimulatorTimerInterface& timer);
+>>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
 
             // called at the beginning of a report step
             void beginReportStep(const int time_step);
@@ -172,4 +176,8 @@ namespace Opm {
 } // namespace Opm
 
 #include "BlackoilAquiferModel_impl.hpp"
+<<<<<<< HEAD
 #endif
+=======
+#endif
+>>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424

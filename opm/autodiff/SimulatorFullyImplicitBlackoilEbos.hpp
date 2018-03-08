@@ -30,6 +30,11 @@
 #include <opm/autodiff/WellStateFullyImplicitBlackoil.hpp>
 #include <opm/autodiff/BlackoilWellModel.hpp>
 #include <opm/autodiff/BlackoilAquiferModel.hpp>
+<<<<<<< HEAD
+=======
+#include <opm/autodiff/RateConverter.hpp>
+#include <opm/autodiff/SimFIBODetails.hpp>
+>>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
 #include <opm/autodiff/moduleVersion.hpp>
 #include <opm/simulators/timestepping/AdaptiveTimeStepping.hpp>
 #include <opm/grid/utility/StopWatch.hpp>
@@ -181,6 +186,16 @@ public:
 
         WellState wellStateDummy; //not used. Only passed to make the old interfaces happy
 
+<<<<<<< HEAD
+=======
+        if ( model_param_.matrix_add_well_contributions_ ||
+             model_param_.preconditioner_add_well_contributions_ )
+        {
+            ebosSimulator_.model().clearAuxiliaryModules();
+            auto auxMod = std::make_shared<WellConnectionAuxiliaryModule<TypeTag> >(schedule(), grid());
+            ebosSimulator_.model().addAuxiliaryModule(auxMod);
+        }
+>>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
         AquiferModel aquifer_model(ebosSimulator_, model_param_, terminal_output_);
         // aquifer_model.hack_init(ebosSimulator_);
 
@@ -296,7 +311,8 @@ public:
             // write simulation state at the report stage
             Dune::Timer perfTimer;
             perfTimer.start();
-            const double nextstep = adaptiveTimeStepping ? adaptiveTimeStepping->suggestedNextStep() : -1.0;            
+            const double nextstep = adaptiveTimeStepping ? adaptiveTimeStepping->suggestedNextStep() : -1.0;
+
             output_writer_.writeTimeStep( timer, dummy_state, well_model.wellState(), solver->model(), false, nextstep, report);
             report.output_write_time += perfTimer.stop();
 

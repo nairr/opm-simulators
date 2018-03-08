@@ -180,6 +180,12 @@ namespace Opm {
     void
     BlackoilWellModel<TypeTag>::
     timeStepSucceeded() {
+        // TODO: when necessary
+        rateConverter_->template defineState<ElementContext>(ebosSimulator_);
+        for (const auto& well : well_container_) {
+            well->calculateReservoirRates(well_state_);
+        }
+
         previous_well_state_ = well_state_;
     }
 
@@ -287,10 +293,6 @@ namespace Opm {
             well_container_[w]->assembleWellEq(ebosSimulator_, dt, well_state_, only_wells);
         }
     }
-
-
-
-
 
     // applying the well residual to reservoir residuals
     // r = r - duneC_^T * invDuneD_ * resWell_

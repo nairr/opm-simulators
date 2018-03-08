@@ -32,6 +32,10 @@
 #include <opm/autodiff/BlackoilAquiferModel.hpp>
 #include <opm/autodiff/GridHelpers.hpp>
 #include <opm/autodiff/GeoProps.hpp>
+<<<<<<< HEAD
+=======
+#include <opm/autodiff/WellConnectionAuxiliaryModule.hpp>
+>>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
 #include <opm/autodiff/BlackoilDetails.hpp>
 #include <opm/autodiff/NewtonIterationBlackoilInterface.hpp>
 
@@ -343,12 +347,16 @@ namespace Opm {
                        const ReservoirState& reservoir_state,
                        WellState& well_state)
         {
-            DUNE_UNUSED_PARAMETER(timer);
+            // DUNE_UNUSED_PARAMETER(timer);
             DUNE_UNUSED_PARAMETER(reservoir_state);
             DUNE_UNUSED_PARAMETER(well_state);
 
             wellModel().timeStepSucceeded();
+<<<<<<< HEAD
             aquiferModel().timeStepSucceeded();
+=======
+            aquiferModel().timeStepSucceeded(timer);
+>>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
             ebosSimulator_.problem().endTimeStep();
 
         }
@@ -388,9 +396,19 @@ namespace Opm {
                 // the reservoir equations as a source term.
                 wellModel().assemble(iterationIdx, dt);
             }
-            catch ( const Dune::FMatrixError& e  )
+            catch ( const Dune::FMatrixError& )
             {
                 OPM_THROW(Opm::NumericalIssue,"Error encounted when solving well equations");
+            }
+
+            auto& ebosJac = ebosSimulator_.model().linearizer().matrix();
+            if (param_.matrix_add_well_contributions_) {
+                wellModel().addWellContributions(ebosJac);
+            }
+            if ( param_.preconditioner_add_well_contributions_ &&
+                 ! param_.matrix_add_well_contributions_ ) {
+                matrix_for_preconditioner_ .reset(new Mat(ebosJac));
+                wellModel().addWellContributions(*matrix_for_preconditioner_);
             }
 
             return wellModel().lastReport();
@@ -412,13 +430,13 @@ namespace Opm {
                 if (elem.partitionType() != Dune::InteriorEntity)
                     continue;
 
-		unsigned globalElemIdx = elemMapper.index(elem);
+        unsigned globalElemIdx = elemMapper.index(elem);
                 const auto& priVarsNew = ebosSimulator_.model().solution(/*timeIdx=*/0)[globalElemIdx];
 
                 Scalar pressureNew;
-		pressureNew = priVarsNew[Indices::pressureSwitchIdx];
+        pressureNew = priVarsNew[Indices::pressureSwitchIdx];
 
-		Scalar saturationsNew[FluidSystem::numPhases] = { 0.0 };
+        Scalar saturationsNew[FluidSystem::numPhases] = { 0.0 };
                 Scalar oilSaturationNew = 1.0;
                 if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) {
                     saturationsNew[FluidSystem::waterPhaseIdx] = priVarsNew[Indices::waterSaturationIdx];
@@ -461,7 +479,7 @@ namespace Opm {
 
                 for (unsigned phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++ phaseIdx) {
                     Scalar tmp = saturationsNew[phaseIdx] - saturationsOld[phaseIdx];
-		    resultDelta += tmp*tmp;
+            resultDelta += tmp*tmp;
                     resultDenom += saturationsNew[phaseIdx]*saturationsNew[phaseIdx];
                 }
             }
@@ -469,9 +487,9 @@ namespace Opm {
             resultDelta = gridView.comm().sum(resultDelta);
             resultDenom = gridView.comm().sum(resultDenom);
 
-	    if (resultDenom > 0.0)
-	      return resultDelta/resultDenom;
-	    return 0.0;
+        if (resultDenom > 0.0)
+          return resultDelta/resultDenom;
+        return 0.0;
         }
 
 
@@ -503,18 +521,20 @@ namespace Opm {
             // set initial guess
             x = 0.0;
 
+            const Mat& actual_mat_for_prec = matrix_for_preconditioner_ ? *matrix_for_preconditioner_.get() : ebosJac;
             // Solve system.
             if( isParallel() )
             {
                 typedef WellModelMatrixAdapter< Mat, BVector, BVector, BlackoilWellModel<TypeTag>, true > Operator;
-                Operator opA(ebosJac, wellModel(), istlSolver().parallelInformation() );
+                Operator opA(ebosJac, actual_mat_for_prec, wellModel(),
+                             istlSolver().parallelInformation() );
                 assert( opA.comm() );
                 istlSolver().solve( opA, x, ebosResid, *(opA.comm()) );
             }
             else
             {
                 typedef WellModelMatrixAdapter< Mat, BVector, BVector, BlackoilWellModel<TypeTag>, false > Operator;
-                Operator opA(ebosJac, wellModel());
+                Operator opA(ebosJac, actual_mat_for_prec, wellModel());
                 istlSolver().solve( opA, x, ebosResid );
             }
         }
@@ -561,8 +581,11 @@ namespace Opm {
 #endif
 
           //! constructor: just store a reference to a matrix
-          WellModelMatrixAdapter (const M& A, const WellModel& wellMod, const boost::any& parallelInformation = boost::any() )
-              : A_( A ), wellMod_( wellMod ), comm_()
+          WellModelMatrixAdapter (const M& A,
+                                  const M& A_for_precond,
+                                  const WellModel& wellMod,
+                                  const boost::any& parallelInformation = boost::any() )
+              : A_( A ), A_for_precond_(A_for_precond), wellMod_( wellMod ), comm_()
           {
 #if HAVE_MPI
             if( parallelInformation.type() == typeid(ParallelISTLInformation) )
@@ -599,7 +622,7 @@ namespace Opm {
 #endif
           }
 
-          virtual const matrix_type& getmat() const { return A_; }
+          virtual const matrix_type& getmat() const { return A_for_precond_; }
 
           communication_type* comm()
           {
@@ -608,6 +631,7 @@ namespace Opm {
 
         protected:
           const matrix_type& A_ ;
+          const matrix_type& A_for_precond_ ;
           const WellModel& wellMod_;
           std::unique_ptr< communication_type > comm_;
         };
@@ -1069,6 +1093,8 @@ namespace Opm {
         std::vector<std::vector<double>> residual_norms_history_;
         double current_relaxation_;
         BVector dx_old_;
+
+        std::unique_ptr<Mat> matrix_for_preconditioner_;
 
     public:
         /// return the StandardWells object
