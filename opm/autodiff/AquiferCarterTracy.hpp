@@ -231,7 +231,7 @@ namespace Opm
             {
                 for (auto Qai = Qai_.begin(); Qai != Qai_.end(); ++Qai)
                 {
-                    W_flux_ += (*Qai)*timer.currentStepLength();
+                    W_flux_ += (*Qai)*timer.currentStepLength()*86400.0;
                 }
                 std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << ", Perm = " << k_a_ << std::endl;
                 std::cout << "DT " << timer.currentStepLength() << std::endl;
@@ -240,8 +240,8 @@ namespace Opm
             /* Made into public for testing only!!!!!!. Must be protected */
             inline const Scalar time_constant() const
             {
-                Scalar Tc = (1.0/1.0132e7)*mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
-                return Tc;
+                Scalar Tc = 1/(1.0132e7*86400.0)*mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
+                return Tc; // Note that they return constants in the METRIC unit!!!!
             }
 
             /* Made into public for testing only!!!!!!. Must be protected */
@@ -249,7 +249,7 @@ namespace Opm
             {
 
                 Scalar beta = 1e5*c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
-                return beta;
+                return beta; // Note that they return constants in the METRIC unit!!!!
             }
 
             // This is another hack to get the face area only for SPE1.
