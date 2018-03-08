@@ -128,7 +128,6 @@ namespace Opm
                 return *phase_usage_;
             }
 
-<<<<<<< HEAD
             inline int
             flowPhaseToEbosCompIdx( const int phaseIdx ) const
             {
@@ -164,8 +163,6 @@ namespace Opm
                 return phaseIdx;
             }
 
-=======
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
             inline void calculateExplicitQuantities(const Simulator& ebosSimulator)
             {
                 std::cout << "In CarterTracy<calculateExplicitQuantities>: I am aquifer #" << aquiferID_ << std::endl;
@@ -205,19 +202,11 @@ namespace Opm
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) 
                     {
                         // also need to consider the efficiency factor when manipulating the jacobians.
-<<<<<<< HEAD
-		                std::cout<<" inflow derivative = "<<qinflow.derivative(pvIdx)<<std::endl;
-		                std::cout<<" Jac before update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
-		      
-                        ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx] -= qinflow.derivative(pvIdx);
-			            std::cout<<" Jac after update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
-=======
                         std::cout<<" inflow derivative = "<<qinflow.derivative(pvIdx)<<std::endl;
                         std::cout<<" Jac before update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
               
                         ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx] -= qinflow.derivative(pvIdx);
                         std::cout<<" Jac after update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
                     }
                     std::cout << "Debug 9c" << std::endl;
                     std::cout << "In CarterTracy<assembleAquiferEq>: I am aquifer #" << aquiferID_
@@ -237,15 +226,7 @@ namespace Opm
                 }
             }
 
-<<<<<<< HEAD
-            inline void after_time_step()
-            {
-                for (auto Qai = Qai_.begin(); Qai != Qai_.end(); ++Qai)
-                {
-                    W_flux_ += (*Qai);
-                }
-                std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_ << std::endl;
-=======
+
             inline void after_time_step(const SimulatorTimerInterface& timer)
             {
                 for (auto Qai = Qai_.begin(); Qai != Qai_.end(); ++Qai)
@@ -254,28 +235,20 @@ namespace Opm
                 }
                 std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << ", Perm = " << k_a_ << std::endl;
                 std::cout << "DT " << timer.currentStepLength() << std::endl;
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
             }
 
             /* Made into public for testing only!!!!!!. Must be protected */
             inline const Scalar time_constant() const
             {
-<<<<<<< HEAD
-                Scalar Tc = mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
-=======
                 Scalar Tc = (1.0/1.0132e7)*mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
                 return Tc;
             }
 
             /* Made into public for testing only!!!!!!. Must be protected */
             inline const Scalar aquifer_influx_constant() const
             {
-<<<<<<< HEAD
-                Scalar beta = c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
-=======
+
                 Scalar beta = 1e5*c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
                 return beta;
             }
 
@@ -351,11 +324,9 @@ namespace Opm
 
             // Cumulative flux
             Scalar dt_, pa0_, gravity_;
-<<<<<<< HEAD
-	    Eval W_flux_;
-=======
+
             Eval W_flux_;
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
+
             // Also return the polynomial fit
             std::vector<Scalar> coeff_;
             
@@ -397,15 +368,6 @@ namespace Opm
 
                 // pa0_ is the initial aquifer water pressure. Must be calculated from equilibrium if left default,
                 // or we get the information from the deck Hacked to make it at 45e6 Pa
-<<<<<<< HEAD
-                //calculate_reservoir_equilibrium();
-                pa0_ = 1e8;
-                mu_w_ = 0.5e-3;
-                pressure_previous_.resize(cell_idx_.size(), 0.);
-                pressure_current_.resize(cell_idx_.size(), 0.);
-
-                rhow_.resize(cell_idx_.size(), 1000.0); 
-=======
                 // calculate_reservoir_equilibrium();
                 pa0_ = 0.45e8; // Add a call to opm-parser to get the user-defined aquifer pressure (if exist)
 
@@ -414,7 +376,6 @@ namespace Opm
 
                 pressure_previous_.resize(cell_idx_.size(), 0.);
                 pressure_current_.resize(cell_idx_.size(), 0.);
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
                 Qai_.resize(cell_idx_.size(), 0.0);
 
                 polynomial_fit(aqutab_td_, aqutab_pi_, coeff_, 1, true);
@@ -434,15 +395,9 @@ namespace Opm
 
             inline Scalar dpai(int idx)
             {
-<<<<<<< HEAD
-              std::cout<<" pa0_ = " << pa0_ <<" rhow_ = " <<  rhow_[idx].value() <<"gravity = " <<gravity_<<std::endl;
-	      std::cout<<" cell_depth = "<<cell_depth_[idx]<<"d0_ "<< d0_<<"pressure_previous = "<<pressure_previous_[idx].value()<<std::endl;
-	      Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
-=======
                 std::cout<<" pa0_ = " << pa0_ <<" rhow_ = " <<  rhow_[idx].value() <<"gravity = " <<gravity_<<std::endl;
                 std::cout<<" cell_depth = "<<cell_depth_[idx]<<"d0_ "<< d0_<<"pressure_previous = "<<pressure_previous_[idx].value()<<std::endl;
                 Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
                 return dp;
             }
 
@@ -456,17 +411,13 @@ namespace Opm
                 std::cout<<"T = "<<timer.simulationTimeElapsed()<<std::endl;
                 Scalar PItdprime = coeff_.at(1);
                 Scalar PItd = coeff_.at(0) + coeff_.at(1)*td_plus_dt;
-<<<<<<< HEAD
-                std::cout<< "ccoeff_.at(0) = " << coeff_.at(0)<<" coeff_.at(1) = "<<coeff_.at(1)<<std::endl;
-                a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_.value() * PItdprime) ) / ( PItd - td*PItdprime );
-                b = beta / Tc / ( PItd - td*PItdprime);
-=======
+
                 // Scalar PItdprime = 0.;
                 // Scalar PItd = 1.;
                 std::cout<< "ccoeff_.at(0) = " << coeff_.at(0)<<" coeff_.at(1) = "<<coeff_.at(1)<<std::endl;
                 a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_.value() * PItdprime) ) / ( PItd - td*PItdprime );
                 b = beta / (Tc * ( PItd - td*PItdprime));
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
+
             }
 
             inline void calculate_inflow_rate(int idx, const SimulatorTimerInterface& timer)
@@ -474,19 +425,13 @@ namespace Opm
                 Scalar a, b;
                 calculate_a_b_constants(a,b,idx,timer);
                 // This function implements Eq 5.7 of the EclipseTechnicalDescription
-<<<<<<< HEAD
-		         std::cout<<"current_pressure = "<<pressure_current_[idx].value() <<" previous_pressure = "<<pressure_previous_[idx].value()<<std::endl;
-		
-                Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx]- pressure_previous_[idx].value() ) );
-		        std::cout<<"Q = "<<Qai_[idx].value()<<std::endl;
-=======
+
                 std::cout<<"previous_pressure = "<< pressure_previous_[idx] <<" previous_pressure = "<< pressure_previous_[idx].value() <<std::endl;
                 std::cout<<"current_pressure = "<<pressure_current_[idx] <<" current_pressure_val = "<< pressure_current_[idx].value() <<std::endl;
         
                 Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx] - pressure_previous_[idx].value() ) );
 
                 std::cout<<"Q = "<<Qai_[idx].value()<<std::endl;
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
             }
 
             inline void initialize_connections(const Aquancon::AquanconOutput& connection)
@@ -550,13 +495,8 @@ namespace Opm
                         }
                     }
                     alphai_.at(idx) = faceArea_connected/denom_face_areas;
-<<<<<<< HEAD
-		    alphai_.at(idx) = 1.00;                    
-		    auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
-=======
                     alphai_.at(idx) = 1.00; // Hardcoding area fraction to 1.
                     auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
                     cell_depth_.at(idx) = cellCenter[2];
                 }
             }
@@ -576,11 +516,7 @@ namespace Opm
                     //fs_aquifer.setPvtRegionIndex(pvttableID_);
                     //water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx).value() );
                     //rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx).value() );
-<<<<<<< HEAD
-		    water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx) );
-=======
                     water_pressure_reservoir.push_back( fs.pressure(FluidSystem::waterPhaseIdx) );
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
                     rho_water_reservoir.push_back( fs.density(FluidSystem::waterPhaseIdx));
                     pw_aquifer.push_back( water_pressure_reservoir.at(idx) - rho_water_reservoir.at(idx)*gravity_*(cell_depth_.at(idx) - d0_) );
                     //mu_aquifer.push_back( fs_aquifer.viscosity(FluidSystem::waterPhaseIdx).value() );

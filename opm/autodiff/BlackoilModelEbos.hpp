@@ -31,11 +31,7 @@
 #include <opm/autodiff/BlackoilWellModel.hpp>
 #include <opm/autodiff/BlackoilAquiferModel.hpp>
 #include <opm/autodiff/GridHelpers.hpp>
-#include <opm/autodiff/GeoProps.hpp>
-<<<<<<< HEAD
-=======
 #include <opm/autodiff/WellConnectionAuxiliaryModule.hpp>
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
 #include <opm/autodiff/BlackoilDetails.hpp>
 #include <opm/autodiff/NewtonIterationBlackoilInterface.hpp>
 
@@ -352,11 +348,7 @@ namespace Opm {
             DUNE_UNUSED_PARAMETER(well_state);
 
             wellModel().timeStepSucceeded();
-<<<<<<< HEAD
-            aquiferModel().timeStepSucceeded();
-=======
             aquiferModel().timeStepSucceeded(timer);
->>>>>>> d07934d0e381ee63d63aaf3493e3351c2355a424
             ebosSimulator_.problem().endTimeStep();
 
         }
