@@ -231,7 +231,7 @@ namespace Opm
             {
                 for (auto Qai = Qai_.begin(); Qai != Qai_.end(); ++Qai)
                 {
-                    W_flux_ += (*Qai)*timer.currentStepLength()*86400.0;
+                    W_flux_ += (*Qai)*timer.currentStepLength();
                 }
                 std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << ", Perm = " << k_a_ << std::endl;
                 std::cout << "DT " << timer.currentStepLength() << std::endl;
@@ -240,7 +240,7 @@ namespace Opm
             /* Made into public for testing only!!!!!!. Must be protected */
             inline const Scalar time_constant() const
             {
-                Scalar Tc = 1/(1.0132e7*86400.0)*mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
+                Scalar Tc = (mu_w_*phi_aq_*C_t_*r_o_*r_o_)/(k_a_*c1_*(1.0132e7/86400.0));
                 return Tc; // Note that they return constants in the METRIC unit!!!!
             }
 
@@ -248,7 +248,7 @@ namespace Opm
             inline const Scalar aquifer_influx_constant() const
             {
 
-                Scalar beta = 1e5*c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
+                Scalar beta = c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
                 return beta; // Note that they return constants in the METRIC unit!!!!
             }
 
@@ -371,7 +371,7 @@ namespace Opm
                 // calculate_reservoir_equilibrium();
                 pa0_ = 0.45e8; // Add a call to opm-parser to get the user-defined aquifer pressure (if exist)
 
-                rhow_.resize(cell_idx_.size(), 1038.0); // Get from PVT table index (user defined)
+                rhow_.resize(cell_idx_.size(), 1033.0); // Get from PVT table index (user defined)
                 mu_w_ = 0.318e-3; // Ditto as rhow
 
                 pressure_previous_.resize(cell_idx_.size(), 0.);
