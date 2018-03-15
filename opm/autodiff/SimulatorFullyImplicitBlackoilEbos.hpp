@@ -191,7 +191,6 @@ public:
             ebosSimulator_.model().addAuxiliaryModule(auxMod);
         }
         AquiferModel aquifer_model(ebosSimulator_, model_param_, terminal_output_);
-        // aquifer_model.hack_init(ebosSimulator_);
 
         // Main simulation loop.
         while (!timer.done()) {

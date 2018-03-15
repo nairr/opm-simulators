@@ -76,27 +76,6 @@ namespace Opm
             static const int contiPolymerEqIdx = BlackoilIndices::contiPolymerEqIdx;
 
 
-            AquiferCarterTracy(const std::vector<int>& cell_id)
-            : phi_aq_ (1.0), //
-              C_t_ (1.0), //
-              r_o_ (1.0), //
-              k_a_ (1.0), //
-              c1_ (1.0),
-              h_ (1.0), //
-              theta_ (1.0), //
-              c2_ (1.0), //
-              d0_ (1.0),
-              cell_idx_ (cell_id)
-            {
-                mu_w_ = 1e-3;
-                aqutab_td_.push_back(1.0);
-                aqutab_pi_.push_back(1.0);
-                aquiferID_ = 1;
-                inftableID_ = 1;
-                pvttableID_ = 1;
-                init_quantities();
-            }
-
             explicit AquiferCarterTracy( const AquiferCT::AQUCT_data& params, const Aquancon::AquanconOutput& connection,
                                          const int numComponents, const Scalar gravity, const Simulator& ebosSimulator    )
             : phi_aq_ (params.phi_aq), //
@@ -128,24 +107,16 @@ namespace Opm
                 return *phase_usage_;
             }
 
-            inline void calculateExplicitQuantities(const Simulator& ebosSimulator)
-            {
-                std::cout << "In CarterTracy<calculateExplicitQuantities>: I am aquifer #" << aquiferID_ << std::endl;
-            }
 
             inline void assembleAquiferEq(Simulator& ebosSimulator, const SimulatorTimerInterface& timer)
             {
-                std::cout << "In CarterTracy<assembleAquiferEq>: I am aquifer #" << aquiferID_ << std::endl;
-                // resAqui_ = 0.0;
                 dt_ = timer.currentStepLength();
                 auto& ebosJac = ebosSimulator.model().linearizer().matrix();
                 auto& ebosResid = ebosSimulator.model().linearizer().residual();
 
-                // TODO: it probably can be static member for StandardWell
-                const double volume = 0.002831684659200; // 0.1 cu ft;
 
                 auto cellID = cell_idx_.begin();
-                std::cout << "Debug 8" << std::endl;
+
                 size_t idx;
                 for ( idx = 0; cellID != cell_idx_.end(); ++cellID, ++idx )
                 {
@@ -157,26 +128,14 @@ namespace Opm
                     get_current_Pressure_cell(pressure_current_,idx,intQuants);
                     get_current_density_cell(rhow_,idx,intQuants);
                     calculate_inflow_rate(idx, timer);
-                    std::cout << "Debug 9" << " " << Qai_.size() << " " << cell_idx_.size() << std::endl;
                     qinflow = Qai_[idx];
-                    std::cout << "Debug 9a" << " " << *cellID << std::endl;
-                    std::cout <<"debug stuff" << " " << (FluidSystem::waterCompIdx) << std::endl;
                     ebosResid[*cellID][(FluidSystem::waterCompIdx)] -= qinflow.value();
-                    std::cout << "Debug 9b" << std::endl;
 
                     for (int pvIdx = 0; pvIdx < numEq; ++pvIdx) 
                     {
                         // also need to consider the efficiency factor when manipulating the jacobians.
-                        std::cout<<" inflow derivative = "<<qinflow.derivative(pvIdx)<<std::endl;
-                        std::cout<<" Jac before update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
-              
                         ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx] -= qinflow.derivative(pvIdx);
-                        std::cout<<" Jac after update = "<<ebosJac[*cellID][*cellID][(FluidSystem::waterCompIdx)][pvIdx]<<std::endl;
                     }
-                    std::cout << "Debug 9c" << std::endl;
-                    std::cout << "In CarterTracy<assembleAquiferEq>: I am aquifer #" << aquiferID_
-                              // << " -> P_wat[t+dt] = " << pressure_current_[idx] << std::endl
-                              << " Qai[t+dt] = " << Qai_[idx] << std::endl;
                 }
             }
 
@@ -197,45 +156,13 @@ namespace Opm
                 {
                     W_flux_ += (*Qai)*timer.currentStepLength();
                 }
-                std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << ", Perm = " << k_a_ << std::endl;
-                std::cout << "DT " << timer.currentStepLength() << std::endl;
             }
 
-            /* Made into public for testing only!!!!!!. Must be protected */
-            inline const Scalar time_constant() const
-            {
-                Scalar Tc = 86400.0/(1.0132e7)*mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
-                return Tc; // Note that they return constants in the METRIC unit!!!!
-            }
-
-            /* Made into public for testing only!!!!!!. Must be protected */
-            inline const Scalar aquifer_influx_constant() const
-            {
-                Scalar beta = c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
-                return beta; // Note that they return constants in the METRIC unit!!!!
-            }
-
-            // This is another hack to get the face area only for SPE1.
-            // Ideally it should be a map which given a cell_id, it returns the area fraction
             inline const double area_fraction(const int i)
             {
-                return alphai_.at(i);//1000.0*20.0*0.092903/(1000.0*1000.0*0.092903*2 + 1000.0*20.0*0.092903*4);
+                return alphai_.at(i);
             }
 
-            inline void print_private_members() const
-            {
-                std::cout << "Aquifer CT #" << aquiferID_ << std::endl;
-                auto ita = aqutab_td_.cbegin();
-                auto f_lambda = [&ita] (double i) {std::cout << *ita++ << "    " << i << std::endl;};
-                std::for_each( aqutab_pi_.cbegin(), aqutab_pi_.cend(), f_lambda );
-
-                for (auto i = coeff_.begin(); i != coeff_.end(); ++i )
-                {
-                    std::cout << "Coeff = " << *i << std::endl;
-                }
-            }
-
-            /* Made into public for testing only!!!!!!. Must be protected */
             inline const std::vector<int> cell_id() const
             {
                 return cell_idx_;
@@ -245,8 +172,6 @@ namespace Opm
             {
                 return aquiferID_;
             }
-
-
 
 
         private:
@@ -319,6 +244,11 @@ namespace Opm
                     coeff[i] = result[i];
             }
 
+            inline void get_influence_table_values(Scalar& pitd, Scalar& pitd_prime, const Scalar& td)
+            {
+                // http://kluge.in-chemnitz.de/opensource/spline/
+            }
+
             inline void init_quantities(const Aquancon::AquanconOutput& connection)
             {
                 // We reset the cumulative flux at the start of any simulation, so, W_flux = 0
@@ -356,42 +286,45 @@ namespace Opm
 
             inline Scalar dpai(int idx)
             {
-                std::cout<<" pa0_ = " << pa0_ <<" rhow_ = " <<  rhow_[idx].value() <<"gravity = " <<gravity_<<std::endl;
-                std::cout<<" cell_depth = "<<cell_depth_[idx]<<"d0_ "<< d0_<<"pressure_previous = "<<pressure_previous_[idx].value()<<std::endl;
                 Scalar dp = pa0_ + rhow_[idx].value()*gravity_*(cell_depth_[idx] - d0_) - pressure_previous_[idx].value();
                 return dp;
             }
 
+            // This function implements Eqs 5.8 and 5.9 of the EclipseTechnicalDescription
             inline void calculate_a_b_constants(Scalar& a, Scalar& b, const int idx, const SimulatorTimerInterface& timer)
             {
-                // This function implements Eqs 5.8 and 5.9 of the EclipseTechnicalDescription
                 Scalar beta = aquifer_influx_constant();
                 Scalar Tc = time_constant();
                 Scalar td_plus_dt = (timer.currentStepLength() + timer.simulationTimeElapsed()) / Tc;
                 Scalar td = timer.simulationTimeElapsed() / Tc;
-                std::cout<<"T = "<<timer.simulationTimeElapsed()<<std::endl;
+
                 Scalar PItdprime = coeff_.at(1);
                 Scalar PItd = coeff_.at(0) + coeff_.at(1)*td_plus_dt;
-                // Scalar PItdprime = 0.;
-                // Scalar PItd = 1.;
-                std::cout<< "ccoeff_.at(0) = " << coeff_.at(0)<<" coeff_.at(1) = "<<coeff_.at(1)<<std::endl;
                 a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_.value() * PItdprime) ) / ( PItd - td*PItdprime );
                 b = beta / (Tc * ( PItd - td*PItdprime));
             }
 
+            // This function implements Eq 5.7 of the EclipseTechnicalDescription       
             inline void calculate_inflow_rate(int idx, const SimulatorTimerInterface& timer)
             {
                 Scalar a, b;
                 calculate_a_b_constants(a,b,idx,timer);
-                // This function implements Eq 5.7 of the EclipseTechnicalDescription
-                std::cout<<"previous_pressure = "<< pressure_previous_[idx] <<" previous_pressure = "<< pressure_previous_[idx].value() <<std::endl;
-                std::cout<<"current_pressure = "<<pressure_current_[idx] <<" current_pressure_val = "<< pressure_current_[idx].value() <<std::endl;
-        
                 Qai_[idx] = area_fraction(idx)*( a - b * ( pressure_current_[idx] - pressure_previous_[idx].value() ) );
-
-                std::cout<<"Q = "<<Qai_[idx].value()<<std::endl;
             }
 
+            inline const Scalar time_constant() const
+            {
+                Scalar Tc = 86400.0/(1.0132e7)*mu_w_*phi_aq_*C_t_*r_o_*r_o_/(k_a_*c1_);
+                return Tc;
+            }
+
+            inline const Scalar aquifer_influx_constant() const
+            {
+                Scalar beta = c2_*h_*theta_*phi_aq_*C_t_*r_o_*r_o_;
+                return beta;
+            }
+
+            // This function is used to initialize and calculate the alpha_i for each grid connection to the aquifer
             inline void initialize_connections(const Aquancon::AquanconOutput& connection)
             {
                 const auto& eclState = ebos_simulator_.vanguard().eclState();
@@ -414,11 +347,12 @@ namespace Opm
 
                 // Translate the C face tag into the enum used by opm-parser's TransMult class
                 Opm::FaceDir::DirEnum faceDirection;
-                
+
+                // denom_face_areas is the sum of the areas connected to an aquifer
+                Scalar denom_face_areas = 0.;
                 for (int idx = 0; idx < cell_idx_.size(); ++idx)
                 {
                     auto cellFacesRange = cell2Faces[cell_idx_.at(idx)];
-                    Scalar denom_face_areas = 0.;
                     Scalar faceArea_connected = 0.;
                     for(auto cellFaceIter = cellFacesRange.begin(); cellFaceIter != cellFacesRange.end(); ++cellFaceIter)
                     {
@@ -447,13 +381,8 @@ namespace Opm
                             faceArea_connected = Opm::UgGridHelpers::faceArea(ugrid, faceIdx);
                             denom_face_areas += faceArea_connected;
                         }
-                        else
-                        {
-                            denom_face_areas += Opm::UgGridHelpers::faceArea(ugrid, faceIdx);
-                        }
                     }
                     alphai_.at(idx) = faceArea_connected/denom_face_areas;
-                    alphai_.at(idx) = 1.00; // Hardcoding area fraction to 1.
                     auto cellCenter = grid.getCellCenter(cell_idx_.at(idx));
                     cell_depth_.at(idx) = cellCenter[2];
                 }

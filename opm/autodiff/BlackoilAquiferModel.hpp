@@ -81,8 +81,6 @@ namespace Opm {
             static const int numEq = BlackoilIndices::numEq;
             static const int solventSaturationIdx = BlackoilIndices::solventSaturationIdx;
 
-            typedef Ewoms::BlackOilPolymerModule<TypeTag> PolymerModule;
-
             typedef AquiferCarterTracy<TypeTag> Aquifer_object;
 
             BlackoilAquiferModel(Simulator& ebosSimulator,
@@ -112,7 +110,7 @@ namespace Opm {
                 return ebosSimulator_;
             }
 
-            /// Hack function to get what I need from parser
+            // This initialization function is used to connect the parser objects with the ones needed by AquiferCarterTracy
             void init(const Simulator& ebosSimulator, std::vector<Aquifer_object>& aquifers);
 
         protected:
@@ -136,16 +134,8 @@ namespace Opm {
 
             SimulatorReport last_report_;
 
-            const Schedule& schedule() const
-            { return ebosSimulator_.gridManager().schedule(); }
-
-            void updatePrimaryVariables();
-
-            void initPrimaryVariablesEvaluation() const;
 
             void updateConnectionIntensiveQuantities() const;
-
-            void calculateExplicitQuantities();
 
             // The number of components in the model.
             int numComponents() const;
@@ -153,8 +143,6 @@ namespace Opm {
             int numAquifers() const;
 
             int numPhases() const;
-
-            int flowPhaseToEbosPhaseIdx( const int phaseIdx ) const;
 
             void assembleAquiferEq(const SimulatorTimerInterface& timer);
 
