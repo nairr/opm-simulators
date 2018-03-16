@@ -230,8 +230,15 @@ namespace Opm
             inline void after_time_step(const SimulatorTimerInterface& timer)
             {
                 for (auto Qai = Qai_.begin(); Qai != Qai_.end(); ++Qai)
-                {
+                {   
+                    //Scalar Tc = time_constant();
+                    //Scalar td_plus_dt = (timer.currentStepLength() + timer.simulationTimeElapsed()) / Tc;
+                    //Scalar td = timer.simulationTimeElapsed() / Tc;
+                    //W_flux_ += (td_plus_dt - td)*a_;
+
                     W_flux_ += (*Qai)*timer.currentStepLength();
+                    std::cout << "Qe = " << *Qai << std::endl;
+                    std::cout << "Te = " << timer.simulationTimeElapsed() << std::endl;
                 }
                 std::cout << "Aquifer # " << aquiferID_ << ": My cumulative flux = " << W_flux_.value() << ", Perm = " << k_a_ << std::endl;
                 std::cout << "DT " << timer.currentStepLength() << std::endl;
@@ -323,7 +330,7 @@ namespace Opm
             std::vector<Scalar> aqutab_td_, aqutab_pi_;
 
             // Cumulative flux
-            Scalar dt_, pa0_, gravity_;
+            Scalar dt_, pa0_, gravity_, a_;
 
             Eval W_flux_;
 
@@ -378,7 +385,7 @@ namespace Opm
                 pressure_current_.resize(cell_idx_.size(), 0.);
                 Qai_.resize(cell_idx_.size(), 0.0);
 
-                polynomial_fit(aqutab_td_, aqutab_pi_, coeff_, 1, true);
+                polynomial_fit(aqutab_td_, aqutab_pi_, coeff_, 2, true);
             }
 
             inline void get_current_Pressure_cell(std::vector<Eval>& pressure_water, const int idx, const IntensiveQuantities& intQuants)
@@ -409,13 +416,17 @@ namespace Opm
                 Scalar td_plus_dt = (timer.currentStepLength() + timer.simulationTimeElapsed()) / Tc;
                 Scalar td = timer.simulationTimeElapsed() / Tc;
                 std::cout<<"T = "<<timer.simulationTimeElapsed()<<std::endl;
-                Scalar PItdprime = coeff_.at(1);
-                Scalar PItd = coeff_.at(0) + coeff_.at(1)*td_plus_dt;
-
+                Scalar PItdprime = coeff_.at(2)*td_plus_dt + coeff_.at(1);
+                Scalar PItd =coeff_.at(0) + coeff_.at(1)*td_plus_dt + coeff_.at(2)*td_plus_dt*td_plus_dt;
+                //Scalar PItdprime = coeff_.at(1);
+                //Scalar PItd = coeff_.at(0) + coeff_.at(1)*td_plus_dt;
+                std::cout<< "Td = " << td<<" td_plus_dt = "<<td_plus_dt<<std::endl;
+                std::cout<< "Tc = " << Tc<<std::endl;
                 // Scalar PItdprime = 0.;
                 // Scalar PItd = 1.;
                 std::cout<< "ccoeff_.at(0) = " << coeff_.at(0)<<" coeff_.at(1) = "<<coeff_.at(1)<<std::endl;
                 a = 1.0/Tc * ( (beta * dpai(idx)) - (W_flux_.value() * PItdprime) ) / ( PItd - td*PItdprime );
+                a_ = a;
                 b = beta / (Tc * ( PItd - td*PItdprime));
 
             }
