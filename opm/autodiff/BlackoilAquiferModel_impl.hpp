@@ -38,7 +38,7 @@ namespace Opm {
     void
     BlackoilAquiferModel<TypeTag>:: beginTimeStep() 
     {
-        // Right now it doesn't do shit.
+
     }
 
     // called at the end of a time step
@@ -57,7 +57,7 @@ namespace Opm {
     void
     BlackoilAquiferModel<TypeTag>:: beginReportStep(const int time_step) 
     {
-        // Right now it doesn't do shit.
+
     }
 
     // called at the end of a report step
@@ -65,14 +65,7 @@ namespace Opm {
     void
     BlackoilAquiferModel<TypeTag>:: endReportStep() 
     {
-        // Right now it just spits out the constants for each aquifers
-        // We are using the simple integer indexing for the aquifers
-        for (int i = 0; i < numAquifers(); ++i)
-        {
-            std::cout << "Aquifer[" << i << "]"
-                      << " : Tc = " << aquifers()[i].time_constant()
-                      << ", beta = " << aquifers()[i].aquifer_influx_constant() << std::endl;
-        }
+
     }
 
     // Get the last report step
@@ -80,9 +73,6 @@ namespace Opm {
     const SimulatorReport& 
     BlackoilAquiferModel<TypeTag>:: lastReport() const 
     {
-        for (auto i = aquifers_.begin(); i != aquifers_.end(); ++i){
-            (*i).print_private_members();
-        }
         return last_report_;
     }
 
@@ -93,47 +83,22 @@ namespace Opm {
               const int iterationIdx                )
     {
         last_report_ = SimulatorReport();
-        std::cout << "Debug 1" << std::endl;
+
         // We need to update the reservoir pressures connected to the aquifer
         updateConnectionIntensiveQuantities();
-        std::cout << "Debug 2" << std::endl;
+
         if (iterationIdx == 0) {
             // We can do the Table check and coefficients update in this function
             // For now, it does nothing!
-            std::cout << "Debug 3" << std::endl;
             prepareTimeStep(timer);
-        }
-
-        if (iterationIdx == 0) {
-            std::cout << "Debug 4" << std::endl;
-            calculateExplicitQuantities();
         }
 
         if (param_.solve_aquifereq_initially_ && iterationIdx == 0) {
             // solve the aquifer equations as a pre-processing step
-            std::cout << "Debug 5" << std::endl;
             last_report_ = solveAquiferEq(timer);
         }
-        std::cout << "Debug 6" << std::endl;
         assembleAquiferEq(timer);
-        std::cout << "Debug 7" << std::endl;
         last_report_.converged = true;
-    }
-
-    // Protected function: Update the primary variables
-    template<typename TypeTag>
-    void
-    BlackoilAquiferModel<TypeTag>:: updatePrimaryVariables() 
-    {
-        // Right now it doesn't do shit.
-    }
-
-    // Protected function: Init the primary variables
-    template<typename TypeTag>
-    void
-    BlackoilAquiferModel<TypeTag>:: initPrimaryVariablesEvaluation() const 
-    {
-        // Right now it doesn't do shit.
     }
 
     template<typename TypeTag>
@@ -151,18 +116,6 @@ namespace Opm {
             elemCtx.updatePrimaryIntensiveQuantities(/*timeIdx=*/0);
         }
     }
-
-    template<typename TypeTag>
-    void
-    BlackoilAquiferModel<TypeTag>:: calculateExplicitQuantities()
-    {
-        // for (auto aqui = aquifers_.begin(); aqui!= aquifers_.end(); ++aqui)
-        // {
-        //     std::cout << "calculateExplicitQuantities: Aquifer id = " << aqui->aquiferID() << std::endl;
-        //     aqui->calculateExplicitQuantities(ebosSimulator_);
-        // }
-    }
-
 
     template<typename TypeTag>
     SimulatorReport 
@@ -203,28 +156,8 @@ namespace Opm {
     int
     BlackoilAquiferModel<TypeTag>:: numPhases() const
     {
-        // Not implemented yet!!!!!!!!!!!!
         const auto& pu = phase_usage_;
         return pu.num_phases;
-    }
-
-
-    // Protected function: returns the phase index in ebos
-    template<typename TypeTag>
-    int
-    BlackoilAquiferModel<TypeTag>:: flowPhaseToEbosPhaseIdx( const int phaseIdx ) const
-    {
-        const auto& pu = phase_usage_;
-        if (active_[Water] && pu.phase_pos[Water] == phaseIdx)
-            return FluidSystem::waterPhaseIdx;
-        if (active_[Oil] && pu.phase_pos[Oil] == phaseIdx)
-            return FluidSystem::oilPhaseIdx;
-        if (active_[Gas] && pu.phase_pos[Gas] == phaseIdx)
-            return FluidSystem::gasPhaseIdx;
-
-        assert(phaseIdx < 3);
-        // for other phases return the index
-        return phaseIdx;
     }
 
     // Protected function which calls the individual aquifer models
@@ -234,7 +167,6 @@ namespace Opm {
     {
         for (auto aquifer = aquifers_.begin(); aquifer != aquifers_.end(); ++aquifer)
         {
-            std::cout << "assembleAquiferEq: Aquifer id = " << aquifer->aquiferID() << std::endl;
             aquifer->assembleAquiferEq(ebosSimulator_, timer);
         }
     }
@@ -264,7 +196,7 @@ namespace Opm {
     // Initialize the aquifers in the deck
     template<typename TypeTag>
     void
-    BlackoilAquiferModel<TypeTag>:: init(const Simulator& ebosSimulator, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)//, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)
+    BlackoilAquiferModel<TypeTag>:: init(const Simulator& ebosSimulator, std::vector< AquiferCarterTracy<TypeTag> >& aquifers)
     {
         const auto& deck = ebosSimulator.vanguard().deck();
         const auto& eclState = ebosSimulator.vanguard().eclState();
@@ -276,10 +208,6 @@ namespace Opm {
         std::vector<AquiferCT::AQUCT_data> aquifersData = aquiferct.getAquifers();
         std::vector<Aquancon::AquanconOutput> aquifer_connection = aquifer_connect.getAquOutput();
 
-        // for (auto aquiferData = aquifersData.begin(); aquiferData != aquifersData.end(); ++aquiferData)
-        // {
-        //     aquifers.push_back( AquiferCarterTracy<TypeTag> (*aquiferData, numComponents(), gravity_ ) );
-        // }
         assert( aquifersData.size() == aquifer_connect.size() );
 
 
